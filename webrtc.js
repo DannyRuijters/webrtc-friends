@@ -74,8 +74,8 @@ function createVideoCanvas(canvasId, title, peerInfo) {
     // Add to grid
     videoGrid.appendChild(container);
     
-    // // Add mouse events for the new canvas
-    // addMouseEvents(canvas);
+    // Add mouse events for the new canvas
+    addMouseEvents(canvas);
     
     // Rebalance grid layout
     rebalanceVideoGrid();
@@ -372,7 +372,7 @@ async function startLocalVideo() {
         }
         
         const localCanvas = canvases['localVideo'].canvas;
-        initCanvasGL(localCanvas).filterMode = 2;  // use linear interpolation
+        initCanvasGL(localCanvas);
         initVideoTexture(localCanvas, localStream, 'local');
         
         updateStatus("Local camera started. Waiting for peer...", 'success');
@@ -406,7 +406,7 @@ async function createPeerConnection(peerId, peerName) {
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
-        initCanvasGL(remoteCanvas).filterMode = 2;  // use linear interpolation
+        initCanvasGL(remoteCanvas);
         initVideoTexture(remoteCanvas, event.streams[0], canvasId);
         updateStatus(`Remote stream received from "${peerName}"!`, 'success');
     };
@@ -620,19 +620,15 @@ function loadCredentialsFromCookies() {
 }
 
 function webGLStart() {
-    // // Event handlers will be added dynamically as canvases are created
-    // addEventHandlers(() => {
-    //     // Apply filter to all existing canvases
-    //     Object.keys(canvases).forEach(canvasId => {
-    //         const canvas = canvases[canvasId].canvas;
-    //         const gl = canvas.gl;
-    //         if (gl) {
-    //             gl.filterMode = (gl.filterMode + 1) % 4;
-    //             const texture = (gl.filterMode === 0) ? gl.rttFramebufferTextureY.texture : gl.myTexture;
-    //             cubicFilter(gl, texture, canvas.width, canvas.height);
-    //         }
-    //     });
-    // });
+    // Event handlers will be added dynamically as canvases are created
+    addEventHandlers(() => {
+        // Apply filter to all existing canvases
+        Object.keys(canvases).forEach(canvasId => {
+            const canvas = canvases[canvasId].canvas;
+            const gl = canvas.gl;
+            if (gl) cubicFilter(gl, gl.myTexture, canvas.width, canvas.height);
+        });
+    });
     
     // Load saved credentials from cookies
     loadCredentialsFromCookies();

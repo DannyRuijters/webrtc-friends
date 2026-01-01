@@ -41,8 +41,6 @@ function initGL(canvas) {
         gl.zoom = 1.0;
         gl.translateX = 0.0;
         gl.translateY = 0.0;
-        gl.rotateAngle = 0.0;
-        gl.filterMode = 0;
         canvas.gl = gl;
     } catch (e) {
     }
@@ -83,70 +81,7 @@ function compileShader(gl, fragmentShader, vertexShader) {
     return shaderProgram;
 }
 
-function initShaders(gl) {
-    const shaderPrefilterStr = '\
-        varying vec2 vTextureCoord;                                                 \n\
-        uniform sampler2D uSampler;                                                 \n\
-        uniform vec2 increment;                                                     \n\
-                                                                                    \n\
-        void main(void) {                                                           \n\
-            vec4 w = 1.732176555 * texture2D(uSampler, vTextureCoord);              \n\
-            vec2 im = vTextureCoord - increment;                                    \n\
-            vec2 ip = vTextureCoord + increment;                                    \n\
-            w -= 0.464135309 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            im -= increment; ip += increment;                                       \n\
-            w += 0.124364681 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            im -= increment; ip += increment;                                       \n\
-            w -= 0.033323416 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            im -= increment; ip += increment;                                       \n\
-            w += 0.008928982 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            im -= increment; ip += increment;                                       \n\
-            w -= 0.002392514 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            im -= increment; ip += increment;                                       \n\
-            w += 0.000641072 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            im -= increment; ip += increment;                                       \n\
-            w -= 0.000171775 * (texture2D(uSampler,im)+texture2D(uSampler,ip));     \n\
-            gl_FragColor = w;                                                       \n\
-        }';
-    
-    const shaderCubicStr = '\
-        varying vec2 vTextureCoord;                                                 \n\
-        uniform vec2 nrOfPixels;                                                    \n\
-        uniform mat3 matrix;                                                        \n\
-        uniform sampler2D uSampler;                                                 \n\
-                                                                                    \n\
-        void main(void) {                                                           \n\
-            // shift the coordinate from [0,1] to [-0.5, nrOfPixels-0.5]            \n\
-            //vec2 nrOfPixels = vec2(textureSize2D(uSampler, 0));                   \n\
-            vec2 coordTex = (matrix * vec3(vTextureCoord - 0.5, 1)).xy + 0.5;       \n\
-            vec2 coord_grid = coordTex * nrOfPixels - 0.5;                          \n\
-            vec2 index = floor(coord_grid);                                         \n\
-            vec2 fraction = coord_grid - index;                                     \n\
-            vec2 one_frac = 1.0 - fraction;                                         \n\
-                                                                                    \n\
-            vec2 w0 = 1.0/6.0 * one_frac*one_frac*one_frac;                         \n\
-            vec2 w1 = 2.0/3.0 - 0.5 * fraction*fraction*(2.0-fraction);             \n\
-            vec2 w2 = 2.0/3.0 - 0.5 * one_frac*one_frac*(2.0-one_frac);             \n\
-            vec2 w3 = 1.0/6.0 * fraction*fraction*fraction;                         \n\
-                                                                                    \n\
-            vec2 g0 = w0 + w1;                                                      \n\
-            vec2 g1 = w2 + w3;                                                      \n\
-            vec2 mult = 1.0 / nrOfPixels;                                           \n\
-            //h0 = w1/g0 - 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]             \n\
-            vec2 h0 = mult * ((w1 / g0) - 0.5 + index);                             \n\
-            //h1 = w3/g1 + 1, move from [-0.5, nrOfVoxels-0.5] to [0,1]             \n\
-            vec2 h1 = mult * ((w3 / g1) + 1.5 + index);                             \n\
-                                                                                    \n\
-            // fetch the four linear interpolations                                 \n\
-            vec4 tex00 = texture2D(uSampler, h0);                                   \n\
-            vec4 tex10 = texture2D(uSampler, vec2(h1.x, h0.y));                     \n\
-            tex00 = mix(tex10, tex00, g0.x);  //weigh along the x-direction         \n\
-            vec4 tex01 = texture2D(uSampler, vec2(h0.x, h1.y));                     \n\
-            vec4 tex11 = texture2D(uSampler, h1);                                   \n\
-            tex01 = mix(tex11, tex01, g0.x);  //weigh along the x-direction         \n\
-            gl_FragColor = mix(tex01, tex00, g0.y);  //weigh along the y-direction  \n\
-        }';
-    
+function initShaders(gl) {    
     const shaderSimpleStr = '\
         varying vec2 vTextureCoord;                                                 \n\
         uniform mat3 matrix;                                                        \n\
@@ -171,16 +106,9 @@ function initShaders(gl) {
     const precisionTxt = (highp.precision != 0) ?
         'precision highp float;\nprecision highp sampler2D;\n' :
         'precision mediump float;\nprecision mediump sampler2D;\n';
-    const fragmentPrefilter = loadShader(gl, precisionTxt+shaderPrefilterStr, gl.FRAGMENT_SHADER);
-    const fragmentCubic = loadShader(gl, precisionTxt+shaderCubicStr, gl.FRAGMENT_SHADER);
     const fragmentSimple = loadShader(gl, precisionTxt+shaderSimpleStr, gl.FRAGMENT_SHADER);
     const vertexShader = loadShader(gl, shaderVertexStr, gl.VERTEX_SHADER);
 
-    gl.shaderPrefilter = compileShader(gl, fragmentPrefilter, vertexShader);
-    gl.shaderPrefilter.incrementUniform = gl.getUniformLocation(gl.shaderPrefilter, "increment");
-    gl.shaderCubic = compileShader(gl, fragmentCubic, vertexShader);
-    gl.shaderCubic.nrOfPixelsUniform = gl.getUniformLocation(gl.shaderCubic, "nrOfPixels");
-    gl.shaderCubic.matrixUniform = gl.getUniformLocation(gl.shaderCubic, "matrix");
     gl.shaderSimple = compileShader(gl, fragmentSimple, vertexShader);
     gl.shaderSimple.matrixUniform = gl.getUniformLocation(gl.shaderSimple, "matrix");
 }
@@ -192,37 +120,6 @@ function initTextureCoordBuffer(gl) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
     gl.textureCoordBuffer.itemSize = 2;
     gl.textureCoordBuffer.numItems = 4;
-}
-
-function initTextureFramebuffer(gl, width, height) {
-    const rttFramebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, rttFramebuffer);
-
-    const rttTexture = gl.createTexture();
-    rttTexture.width = width;
-    rttTexture.height = height;
-    gl.bindTexture(gl.TEXTURE_2D, rttTexture);
-    const extFloat = gl.getExtension('OES_texture_float');
-    const extFloatBuffer = gl.getExtension('WEBGL_color_buffer_float');
-    const extHalfFloat = gl.getExtension('OES_texture_half_float');
-    const extHalfFloatBuffer = gl.getExtension('EXT_color_buffer_half_float');
-    const texType = (extFloat && extFloatBuffer) ? gl.FLOAT : ((extHalfFloat && extHalfFloatBuffer) ? extHalfFloat.HALF_FLOAT_OES : gl.UNSIGNED_BYTE);
-    const internalType = (extFloat && extFloatBuffer) ? gl.RGBA32F : ((extHalfFloat && extHalfFloatBuffer) ? gl.RGBA16F : gl.RGBA);
-    gl.texImage2D(gl.TEXTURE_2D, 0, internalType, width, height, 0, gl.RGBA, texType, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    const renderbuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
-
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, rttTexture, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
-
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    return { 'framebuffer': rttFramebuffer, 'texture': rttTexture };
 }
 
 function initCanvasGL(canvas) {
@@ -245,34 +142,11 @@ function freeProgram(gl, program) {
     gl.deleteProgram(program);
 }
 
-function freeTextureFramebuffer(gl, buffer) {
-    if (buffer && buffer.framebuffer) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, buffer.framebuffer);
-        const renderbuffer = gl.getFramebufferAttachmentParameter(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.FRAMEBUFFER_ATTACHMENT_OBJECT_NAME);
-        gl.deleteRenderbuffer(renderbuffer);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.deleteFramebuffer(buffer.framebuffer);
-        buffer.framebuffer = null;
-    }
-    if (buffer && buffer.texture) {
-        gl.deleteTexture(buffer.texture);
-        buffer.texture = null;
-    }
-}
-
 function freeResources(gl) {
     gl.deleteBuffer(gl.textureCoordBuffer);
-    freeTextureFramebuffer(gl, gl.rttFramebufferTextureX);
-    freeTextureFramebuffer(gl, gl.rttFramebufferTextureY);
-    freeProgram(gl, gl.shaderPrefilter);
-    freeProgram(gl, gl.shaderCubic);
     freeProgram(gl, gl.shaderSimple);
     
     gl.textureCoordBuffer = null;
-    gl.rttFramebufferTextureX = null;
-    gl.rttFramebufferTextureY = null;
-    gl.shaderPrefilter = null;
-    gl.shaderCubic = null;
     gl.shaderSimple = null;
 }
 
@@ -286,57 +160,25 @@ function drawTexture(gl, shader) {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.textureCoordBuffer.numItems);
 }
 
-function prefilterX(gl, texture) {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, gl.rttFramebufferTextureX.framebuffer);
-    gl.viewport(0, 0, texture.width, texture.height);
-    gl.useProgram(gl.shaderPrefilter);
-    gl.uniform2f(gl.shaderPrefilter.incrementUniform, 1.0 / texture.width, 0.0);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-    drawTexture(gl, gl.shaderPrefilter);
-}
-
-function prefilterY(gl, texture) {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, gl.rttFramebufferTextureY.framebuffer);
-    gl.viewport(0, 0, texture.width, texture.height);
-    gl.useProgram(gl.shaderPrefilter);
-    gl.uniform2f(gl.shaderPrefilter.incrementUniform, 0.0, 1.0 / texture.height);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, gl.rttFramebufferTextureX.texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-    drawTexture(gl, gl.shaderPrefilter);
-}
-
 function cubicFilter(gl, texture, width, height) {
     // Draw final image
     gl.bindFramebuffer(gl.FRAMEBUFFER, gl.buffer);
     gl.viewport(0, 0, width, height);
-    const program = (gl.filterMode < 2) ? gl.shaderCubic : gl.shaderSimple;
-    gl.useProgram(program);
-    if (program == gl.shaderCubic) gl.uniform2f(gl.shaderCubic.nrOfPixelsUniform, texture.width, texture.height);
-    const cos = Math.cos(gl.rotateAngle) * gl.zoom;
-    const sin = Math.sin(gl.rotateAngle);
+    gl.useProgram(gl.shaderSimple);
     // Calculate aspect ratio correction
     const textureAspect = texture.width / texture.height;
     const canvasAspect = width / height;
     const scaleX = (canvasAspect > textureAspect) ? 1.0 : (canvasAspect /textureAspect);
     const scaleY = (canvasAspect > textureAspect) ? (textureAspect / canvasAspect) : 1.0;
-    const matrix = [cos * scaleX, -sin, 0, sin, cos * scaleY, 0, gl.translateX, gl.translateY, 1];
-    gl.uniformMatrix3fv(program.matrixUniform, false, matrix);
+    const matrix = [gl.zoom * scaleX, 0.0, 0.0, 0.0, gl.zoom * scaleY, 0.0, gl.translateX, gl.translateY, 1.0];
+    gl.uniformMatrix3fv(gl.shaderSimple.matrixUniform, false, matrix);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, (gl.filterMode == 3) ? gl.NEAREST : gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, (gl.filterMode == 3) ? gl.NEAREST : gl.LINEAR);
 
-    drawTexture(gl, program);
+    drawTexture(gl, gl.shaderSimple);
 }
 
 function handleLoadedImage(canvas, image, width, height) {
@@ -350,17 +192,7 @@ function handleLoadedImage(canvas, image, width, height) {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
-    if (!gl.rttFramebufferTextureY) {
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        gl.rttFramebufferTextureX = initTextureFramebuffer(gl, texture.width, texture.height);
-        gl.rttFramebufferTextureY = initTextureFramebuffer(gl, texture.width, texture.height);
-    } else {
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    }
-
-    prefilterX(gl, texture);
-    prefilterY(gl, texture);
-    texture = (gl.filterMode == 0) ? gl.rttFramebufferTextureY.texture : texture;
     cubicFilter(gl, texture, canvas.width, canvas.height);
 }
