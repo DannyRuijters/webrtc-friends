@@ -70,8 +70,7 @@ function windowResize() {
             canvas.width = width;
             canvas.height = height;
             const gl = canvas.gl;
-            const texture = (gl.filterMode == 0) ? gl.rttFramebufferTextureY.texture : texture;
-            cubicFilter(gl, texture, canvas.width, canvas.height);
+            cubicFilter(gl, gl.myTexture, canvas.width, canvas.height);
         }
     }
 }
