@@ -190,6 +190,25 @@ function rebalanceVideoGrid() {
     });
 }
 
+function toggleConnection() {
+    if (signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
+        disconnectFromServer();
+    } else {
+        connectToSignalingServer();
+    }
+}
+
+function updateConnectionButton(connected) {
+    const btn = document.getElementById('connectionBtn');
+    if (connected) {
+        btn.textContent = 'Disconnect';
+        btn.classList.add('disconnect');
+    } else {
+        btn.textContent = 'Connect';
+        btn.classList.remove('disconnect');
+    }
+}
+
 function connectToSignalingServer() {
     myName = document.getElementById('userName').value.trim() || `User-${Date.now() % 10000}`;
     roomId = document.getElementById('roomId').value.trim();
@@ -216,8 +235,7 @@ function connectToSignalingServer() {
                 peerName: myName,
                 roomId: roomId
             });
-            document.getElementById('connectBtn').disabled = true;
-            document.getElementById('disconnectBtn').disabled = false;
+            updateConnectionButton(true);
         };
         
         signalingSocket.onmessage = async (event) => {
@@ -237,8 +255,7 @@ function connectToSignalingServer() {
         
         signalingSocket.onclose = () => {
             updateStatus('Disconnected from signaling server', 'error');
-            document.getElementById('connectBtn').disabled = false;
-            document.getElementById('disconnectBtn').disabled = true;
+            updateConnectionButton(false);
             document.getElementById('chatInput').disabled = true;
             document.getElementById('sendChatBtn').disabled = true;
             chatEnabled = false;
