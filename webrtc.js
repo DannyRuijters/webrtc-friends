@@ -682,7 +682,54 @@ function webGLStart() {
         validateConnectionButton();
     }
     
+    // Add chat resize functionality
+    initChatResize();
     console.log("Ready. Connect to signaling server first.");
+}
+
+function initChatResize() {
+    const resizeHandle = document.getElementById('chatResizeHandle');
+    const chatContainer = document.getElementById('chatContainer');
+    
+    if (!resizeHandle || !chatContainer) return;
+    
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = chatContainer.offsetWidth;
+        resizeHandle.classList.add('resizing');
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        
+        const deltaX = startX - e.clientX; // Reversed because we're dragging the left edge
+        const newWidth = startWidth + deltaX;
+        
+        // Set min and max width constraints
+        const minWidth = 250;
+        const maxWidth = window.innerWidth * 0.6;
+        
+        if (newWidth >= minWidth && newWidth <= maxWidth) {
+            chatContainer.style.flex = `0 0 ${newWidth}px`;
+        }
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            resizeHandle.classList.remove('resizing');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
 }
 
 // Handle window resize to rebalance grid
