@@ -94,7 +94,7 @@ function handleTouchMove(event) {
         // Check if this is primarily a zoom gesture (distance change > 5px)
         const distanceChange = Math.abs(currentDistance - lastTouchDistance);
         
-        if (distanceChange > 10) {
+        if (distanceChange > 15) {
             // Pinch to zoom
             const scale = currentDistance / lastTouchDistance;
             gl.zoom = touchStartZoom / scale;
@@ -104,8 +104,8 @@ function handleTouchMove(event) {
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
             
-            gl.translateX -= deltaX * texture.matrix[0] / canvas.width;
-            gl.translateY += deltaY * texture.matrix[4] / canvas.height;
+            gl.translateX -= 2.0 * deltaX * texture.matrix[0] / canvas.width;
+            gl.translateY += 2.0 * deltaY * texture.matrix[4] / canvas.height;
         }
         
         lastTouchCenterX = center.x;
