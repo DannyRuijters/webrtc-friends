@@ -88,30 +88,30 @@ function setupWebGLContextHandlers(canvas, canvasId) {
 function createVideoCanvas(canvasId, title, peerInfo) {
     const videoGrid = document.getElementById('videoGrid');
     
-    // Create container div
+    // Create container div with zero padding
     const container = document.createElement('div');
     container.className = 'video-box';
     container.id = `${canvasId}-container`;
     
-    // Create title
-    const h3 = document.createElement('h3');
-    h3.textContent = title;
-    container.appendChild(h3);
-    
-    // Create peer info div
-    const peerInfoDiv = document.createElement('div');
-    peerInfoDiv.className = 'peer-info';
-    peerInfoDiv.id = `${canvasId}PeerInfo`;
-    peerInfoDiv.textContent = peerInfo;
-    container.appendChild(peerInfoDiv);
-    
-    // Create canvas
+    // Create canvas (will be positioned behind overlays)
     const canvas = document.createElement('canvas');
     canvas.id = canvasId;
     canvas.className = 'gl.cubicinterpolation';
     canvas.width = 640;
     canvas.height = 640;
     container.appendChild(canvas);
+    
+    // Create title overlay
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+    container.appendChild(h3);
+    
+    // Create peer info overlay
+    const peerInfoDiv = document.createElement('div');
+    peerInfoDiv.className = 'peer-info';
+    peerInfoDiv.id = `${canvasId}PeerInfo`;
+    peerInfoDiv.textContent = peerInfo;
+    container.appendChild(peerInfoDiv);
     
     // Add to grid
     videoGrid.appendChild(container);
