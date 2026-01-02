@@ -1,0 +1,13 @@
+[Unit]
+Description=WebRTC Friends server
+After=network.target
+
+[Service]
+ExecStart=/home/pi/webrtc-friends/webrtc-signaling-server.py
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=infinity
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
