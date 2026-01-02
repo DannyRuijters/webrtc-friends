@@ -620,22 +620,9 @@ function loadCredentialsFromCookies() {
 }
 
 function webGLStart() {
-    // Event handlers will be added dynamically as canvases are created
-    addEventHandlers(() => {
-        // Apply filter to all existing canvases
-        Object.keys(canvases).forEach(canvasId => {
-            const canvas = canvases[canvasId].canvas;
-            const gl = canvas.gl;
-            if (gl) cubicFilter(gl, gl.myTexture, canvas.width, canvas.height);
-        });
-    });
-    
-    // Load saved credentials from cookies
+    addEventHandlers();
     loadCredentialsFromCookies();
-    
-    // Automatically start local camera
-    startLocalVideo();
-    
+    startLocalVideo();    
     updateStatus("Ready. Connect to signaling server first.", 'status');
 }
 

@@ -75,13 +75,8 @@ function windowResize() {
     }
 }
 
-function addEventHandlers(toggleFilterMode) {
+function addEventHandlers() {
     document.onmouseup = handleMouseUp;
     document.onmousemove = handleMouseMove;
-    document.addEventListener('keydown', function(event) {
-        if (String.fromCharCode(event.which).toLowerCase() == 'f') {
-            toggleFilterMode();
-        }
-    });
     window.addEventListener('resize', windowResize, true);
 }
