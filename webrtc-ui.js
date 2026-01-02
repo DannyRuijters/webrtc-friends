@@ -144,12 +144,27 @@ function rebalanceVideoGrid() {
         return;
     }
     
-    // Calculate maximum size based on viewport
+    // Calculate maximum size based on viewport and available space
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const maxCanvasWidth = Math.floor((viewportWidth - 100) / numCanvases); // Account for padding/margins
-    const maxCanvasHeight = viewportHeight - 300; // Account for controls and other UI
-    const maxSize = Math.min(maxCanvasWidth, maxCanvasHeight);
+    
+    // Get actual available space in the video grid
+    const videoGridRect = videoGrid.getBoundingClientRect();
+    const availableWidth = videoGridRect.width || (viewportWidth - 40); // Fallback to viewport minus margins
+    const availableHeight = videoGridRect.height || (viewportHeight - 200); // Fallback
+    
+    // Calculate size accounting for gaps between canvases
+    const gapSize = 20; // matches CSS gap
+    const totalGaps = Math.max(0, (numCanvases - 1) * gapSize);
+    const maxCanvasWidth = Math.floor((availableWidth - totalGaps) / numCanvases);
+    const maxCanvasHeight = availableHeight;
+    
+    // Use the minimum to ensure square canvases that fit
+    let maxSize = Math.min(maxCanvasWidth, maxCanvasHeight);
+    
+    // Ensure minimum size for mobile devices
+    const minSize = 200;
+    maxSize = Math.max(maxSize, minSize);
     
     // Set all canvases to exactly the same size
     Object.keys(canvases).forEach(canvasId => {
