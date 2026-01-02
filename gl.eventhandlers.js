@@ -27,9 +27,10 @@ function handleMouseMove(event) {
 
         const canvas = lastCanvas;
         const gl = canvas.gl;
-        gl.translateX -= deltaX * gl.zoom / canvas.width;
-        gl.translateY += deltaY * gl.zoom / canvas.height;
-        const texture = (gl.filterMode == 0) ? gl.rttFramebufferTextureY.texture : gl.myTexture;
+        const texture = gl.myTexture;
+        gl.translateX -= deltaX * gl.zoom / texture.width;
+        gl.translateY += deltaY * gl.zoom / texture.height;
+        
         cubicFilter(gl, texture, canvas.width, canvas.height);
         //window.requestAnimFrame(tick);
         event.preventDefault();
@@ -44,7 +45,7 @@ function handleMouseWheel(event) {
     const gl = canvas.gl;
     gl.zoom -= 0.1 * delta;
     if (gl.zoom < 0.001) gl.zoom = 0.001;  //prevent negative or zero zoom
-    const texture = (gl.filterMode == 0) ? gl.rttFramebufferTextureY.texture : gl.myTexture;
+    const texture = gl.myTexture;
     cubicFilter(gl, texture, canvas.width, canvas.height);
     event.preventDefault();
     return false;
@@ -84,6 +85,7 @@ function handleTouchMove(event) {
     if (lastCanvas != null && event.touches.length === 2) {
         const canvas = lastCanvas;
         const gl = canvas.gl;
+        const texture = gl.myTexture;
         
         // Calculate current distance and center
         const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
@@ -102,14 +104,13 @@ function handleTouchMove(event) {
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
             
-            gl.translateX -= deltaX * gl.zoom / canvas.width;
-            gl.translateY += deltaY * gl.zoom / canvas.height;
+            gl.translateX -= deltaX * gl.zoom / texture.width;
+            gl.translateY += deltaY * gl.zoom / texture.height;
         }
         
         lastTouchCenterX = center.x;
         lastTouchCenterY = center.y;
         
-        const texture = (gl.filterMode == 0) ? gl.rttFramebufferTextureY.texture : gl.myTexture;
         cubicFilter(gl, texture, canvas.width, canvas.height);
         event.preventDefault();
     }
