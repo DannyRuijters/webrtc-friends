@@ -6,8 +6,8 @@ body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
 
 /* Wide screen layout - chat on the right */
 @media (min-aspect-ratio: 1/1) {
-    .content-wrapper { flex-direction: row; }
-    .chat-container { flex: 0 0 350px; margin-bottom: 0; max-height: calc(100vh - 200px); display: flex; flex-direction: column; }
+    .content-wrapper { flex-direction: row; height: calc(100vh - 100px); }
+    .chat-container { flex: 0 0 350px; margin-bottom: 0; height: 100%; display: flex; flex-direction: column; }
     .chat-messages { flex: 1; height: auto; }
     .video-grid { margin-bottom: 0; }
 }

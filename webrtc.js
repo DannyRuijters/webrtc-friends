@@ -697,20 +697,19 @@ function initChatResize() {
     let startX = 0;
     let startWidth = 0;
     
-    resizeHandle.addEventListener('mousedown', (e) => {
+    function startResize(clientX) {
         isResizing = true;
-        startX = e.clientX;
+        startX = clientX;
         startWidth = chatContainer.offsetWidth;
         resizeHandle.classList.add('resizing');
         document.body.style.cursor = 'ew-resize';
         document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
+    }
     
-    document.addEventListener('mousemove', (e) => {
+    function doResize(clientX) {
         if (!isResizing) return;
         
-        const deltaX = startX - e.clientX; // Reversed because we're dragging the left edge
+        const deltaX = startX - clientX; // Reversed because we're dragging the left edge
         const newWidth = startWidth + deltaX;
         
         // Set min and max width constraints
@@ -720,16 +719,45 @@ function initChatResize() {
         if (newWidth >= minWidth && newWidth <= maxWidth) {
             chatContainer.style.flex = `0 0 ${newWidth}px`;
         }
-    });
+    }
     
-    document.addEventListener('mouseup', () => {
+    function stopResize() {
         if (isResizing) {
             isResizing = false;
             resizeHandle.classList.remove('resizing');
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
         }
+    }
+    
+    // Mouse events
+    resizeHandle.addEventListener('mousedown', (e) => {
+        startResize(e.clientX);
+        e.preventDefault();
     });
+    
+    document.addEventListener('mousemove', (e) => {
+        doResize(e.clientX);
+    });
+    
+    document.addEventListener('mouseup', stopResize);
+    
+    // Touch events
+    resizeHandle.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            startResize(e.touches[0].clientX);
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+            doResize(e.touches[0].clientX);
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchend', stopResize);
+    document.addEventListener('touchcancel', stopResize);
 }
 
 // Handle window resize to rebalance grid
