@@ -161,24 +161,26 @@ function drawTexture(gl, shader) {
 }
 
 function cubicFilter(gl, texture, width, height) {
-    // Draw final image
-    gl.bindFramebuffer(gl.FRAMEBUFFER, gl.buffer);
-    gl.viewport(0, 0, width, height);
-    gl.useProgram(gl.shaderSimple);
-    // Calculate aspect ratio correction
-    const textureAspect = texture.width / texture.height;
-    const canvasAspect = width / height;
-    const scaleX = (canvasAspect > textureAspect) ? 1.0 : (canvasAspect /textureAspect);
-    const scaleY = (canvasAspect > textureAspect) ? (textureAspect / canvasAspect) : 1.0;
-    const matrix = [gl.zoom * scaleX, 0.0, 0.0, 0.0, gl.zoom * scaleY, 0.0, gl.translateX, gl.translateY, 1.0];
-    gl.uniformMatrix3fv(gl.shaderSimple.matrixUniform, false, matrix);
+    if (gl.buffer && gl.shaderSimple) {
+        // Draw final image
+        gl.bindFramebuffer(gl.FRAMEBUFFER, gl.buffer);
+        gl.viewport(0, 0, width, height);
+        gl.useProgram(gl.shaderSimple);
+        // Calculate aspect ratio correction
+        const textureAspect = texture.width / texture.height;
+        const canvasAspect = width / height;
+        const scaleX = (canvasAspect > textureAspect) ? 1.0 : (canvasAspect /textureAspect);
+        const scaleY = (canvasAspect > textureAspect) ? (textureAspect / canvasAspect) : 1.0;
+        const matrix = [gl.zoom * scaleX, 0.0, 0.0, 0.0, gl.zoom * scaleY, 0.0, gl.translateX, gl.translateY, 1.0];
+        gl.uniformMatrix3fv(gl.shaderSimple.matrixUniform, false, matrix);
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
-    drawTexture(gl, gl.shaderSimple);
+        drawTexture(gl, gl.shaderSimple);
+    }
 }
 
 function handleLoadedImage(canvas, image, width, height) {
