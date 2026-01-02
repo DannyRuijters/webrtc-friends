@@ -161,7 +161,7 @@ function drawTexture(gl, shader) {
 }
 
 function cubicFilter(gl, texture, width, height) {
-    if (gl.buffer && gl.shaderSimple) {
+    if (gl.shaderSimple) {
         // Draw final image
         gl.bindFramebuffer(gl.FRAMEBUFFER, gl.buffer);
         gl.viewport(0, 0, width, height);
