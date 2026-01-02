@@ -112,8 +112,10 @@ function createVideoCanvas(canvasId, title) {
     // Add WebGL context lost/restored handlers
     setupWebGLContextHandlers(canvas, canvasId);
     
-    // Rebalance grid layout
-    rebalanceVideoGrid();
+    // Rebalance grid layout - use requestAnimationFrame to ensure DOM is laid out
+    requestAnimationFrame(() => {
+        rebalanceVideoGrid();
+    });
     
     return { canvas, container };
 }
@@ -184,6 +186,20 @@ function rebalanceVideoGrid() {
         canvas.style.maxWidth = `${maxSize}px`;
         canvas.style.minHeight = `${maxSize}px`;
         canvas.style.maxHeight = `${maxSize}px`;
+        
+        // Update canvas drawing buffer size to match display size
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        const bufferWidth = maxSize * devicePixelRatio;
+        const bufferHeight = maxSize * devicePixelRatio;
+        if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+            canvas.width = bufferWidth;
+            canvas.height = bufferHeight;
+            // Re-render if GL context exists
+            if (canvas.gl && canvas.gl.myTexture) {
+                const texture = canvas.gl.myTexture;
+                cubicFilter(canvas.gl, texture, canvas.width, canvas.height);
+            }
+        }
     });
 }
 
@@ -713,7 +729,7 @@ function initChatResize() {
         const newWidth = startWidth + deltaX;
         
         // Set min and max width constraints
-        const minWidth = 100;
+        const minWidth = window.innerWidth * 0.1;
         const maxWidth = window.innerWidth * 0.6;
         
         if (newWidth >= minWidth && newWidth <= maxWidth) {
