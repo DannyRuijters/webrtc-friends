@@ -85,7 +85,7 @@ function setupWebGLContextHandlers(canvas, canvasId) {
     }, false);
 }
 
-function createVideoCanvas(canvasId, title, peerInfo) {
+function createVideoCanvas(canvasId, title) {
     const videoGrid = document.getElementById('videoGrid');
     
     // Create container div with zero padding
@@ -105,14 +105,7 @@ function createVideoCanvas(canvasId, title, peerInfo) {
     const h3 = document.createElement('h3');
     h3.textContent = title;
     container.appendChild(h3);
-    
-    // Create peer info overlay
-    const peerInfoDiv = document.createElement('div');
-    peerInfoDiv.className = 'peer-info';
-    peerInfoDiv.id = `${canvasId}PeerInfo`;
-    peerInfoDiv.textContent = peerInfo;
-    container.appendChild(peerInfoDiv);
-    
+   
     // Add to grid
     videoGrid.appendChild(container);
     
@@ -439,8 +432,7 @@ async function startLocalVideo() {
         
         // Create local canvas dynamically if it doesn't exist
         if (!canvases['localVideo']) {
-            const peerInfo = myClientId ? `${myName} (ID: ${myClientId}) - Room: ${roomId}` : 'Not connected';
-            canvases['localVideo'] = createVideoCanvas('localVideo', 'Local Camera (You)', peerInfo);
+            canvases['localVideo'] = createVideoCanvas('localVideo', 'You');
         }
         
         const localCanvas = canvases['localVideo'].canvas;
@@ -473,8 +465,7 @@ async function createPeerConnection(peerId, peerName) {
         const canvasId = `remote-${peerId}`;
         // Create remote canvas dynamically if it doesn't exist
         if (!canvases[canvasId]) {
-            const peerInfo = peerName ? `${peerName} (ID: ${peerId})` : `Peer ${peerId}`;
-            canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`, peerInfo);
+            canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`);
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
