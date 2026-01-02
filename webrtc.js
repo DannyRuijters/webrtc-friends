@@ -48,7 +48,6 @@ function setupWebGLContextHandlers(canvas, canvasId) {
     canvas.addEventListener('webglcontextlost', (event) => {
         event.preventDefault();
         console.warn(`WebGL context lost for ${canvasId}`);
-        updateStatus(`WebGL context lost for ${canvasId}. Attempting to restore...`, 'error');
         
         // Stop the video update interval
         if (canvas.intervalID) {
@@ -63,7 +62,6 @@ function setupWebGLContextHandlers(canvas, canvasId) {
     // Handle WebGL context restored
     canvas.addEventListener('webglcontextrestored', (event) => {
         console.log(`WebGL context restored for ${canvasId}`);
-        updateStatus(`WebGL context restored for ${canvasId}`, 'success');
         
         // Mark context as not lost
         canvas.contextLost = false;
@@ -80,7 +78,6 @@ function setupWebGLContextHandlers(canvas, canvasId) {
             }
         } catch (error) {
             console.error(`Error restoring WebGL context for ${canvasId}:`, error);
-            updateStatus(`Failed to restore WebGL context for ${canvasId}: ${error.message}`, 'error');
         }
     }, false);
 }
@@ -203,9 +200,23 @@ function updateConnectionButton(connected) {
     if (connected) {
         btn.textContent = 'Disconnect';
         btn.classList.add('disconnect');
+        btn.disabled = false;
     } else {
         btn.textContent = 'Connect';
         btn.classList.remove('disconnect');
+        validateConnectionButton();
+    }
+}
+
+function validateConnectionButton() {
+    const btn = document.getElementById('connectionBtn');
+    const userName = document.getElementById('userName');
+    const roomId = document.getElementById('roomId');
+    
+    // Only validate if button is in connect mode (not disconnect)
+    if (!btn.classList.contains('disconnect')) {
+        const isValid = userName.value.trim() !== '' && roomId.value.trim() !== '';
+        btn.disabled = !isValid;
     }
 }
 
@@ -213,22 +224,14 @@ function connectToSignalingServer() {
     myName = document.getElementById('userName').value.trim() || `User-${Date.now() % 10000}`;
     roomId = document.getElementById('roomId').value.trim();
     
-    if (!roomId) {
-        updateStatus('Please enter a Call ID', 'error');
-        return;
-    }
-    
     // Store username and roomId in cookies
     setCookie('webrtc_username', myName);
     setCookie('webrtc_roomId', roomId);
-    
-    updateStatus('Connecting to signaling server...', 'status');
     
     try {
         signalingSocket = new WebSocket(SIGNALING_SERVER);
         
         signalingSocket.onopen = () => {
-            updateStatus('Connected to signaling server', 'success');
             // Send initial message with peer name and room ID
             sendSignalingMessage({
                 type: 'register',
@@ -244,17 +247,14 @@ function connectToSignalingServer() {
                 await handleSignalingMessage(message);
             } catch (error) {
                 console.error('Error handling signaling message:', error);
-                updateStatus(`Signaling error: ${error.message}`, 'error');
             }
         };
         
         signalingSocket.onerror = (error) => {
             console.error('WebSocket error:', error);
-            updateStatus('Failed to connect to signaling server', 'error');
         };
         
         signalingSocket.onclose = () => {
-            updateStatus('Disconnected from signaling server', 'error');
             updateConnectionButton(false);
             document.getElementById('chatInput').disabled = true;
             document.getElementById('sendChatBtn').disabled = true;
@@ -263,7 +263,7 @@ function connectToSignalingServer() {
             myClientId = null;
         };
     } catch (error) {
-        updateStatus(`Connection error: ${error.message}`, 'error');
+        console.error(`Connection error: ${error.message}`);
     }
 }
 
@@ -288,8 +288,7 @@ function disconnectFromServer() {
     });
     
     remotePeers = {};
-    
-    updateStatus("Disconnected from server (local video still active)", 'status');
+
     console.log('Disconnected from server');
 }
 
@@ -300,7 +299,6 @@ async function handleSignalingMessage(message) {
         case 'welcome':
             myClientId = message.clientId;
             const peersInRoom = message.peersInRoom || (message.totalClients - 1);
-            updateStatus(`Connected as "${myName}" (Client ${myClientId}) in room "${roomId}". Peers in room: ${peersInRoom}`, 'success');
             console.log(`You are "${myName}" (Client ${myClientId}) in room "${roomId}"`);
             // Update local peer info if canvas exists
             const localPeerInfo = document.getElementById('localVideoPeerInfo');
@@ -319,10 +317,8 @@ async function handleSignalingMessage(message) {
                 const peersInRoom = message.peersInRoom || message.totalClients;
                 
                 // Track the new peer
-                remotePeers[peerId] = { name: peerName };
-                
+                remotePeers[peerId] = { name: peerName };                
                 console.log(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
-                updateStatus(`"${peerName}" joined. Total peers: ${Object.keys(remotePeers).length}`, 'success');
                 
                 // If we have local stream and no existing connection to this peer, automatically call
                 if (localStream && !peerConnections[peerId]) {
@@ -339,7 +335,6 @@ async function handleSignalingMessage(message) {
             
             if (remotePeers[disconnectedPeerId]) {
                 const peerName = remotePeers[disconnectedPeerId].name;
-                updateStatus(`"${peerName}" disconnected`, 'error');
                 
                 // Remove remote canvas for this peer
                 removeVideoCanvas(`remote-${disconnectedPeerId}`);
@@ -393,7 +388,6 @@ function sendSignalingMessage(message) {
         signalingSocket.send(JSON.stringify(message));
     } else {
         console.error('Cannot send message: WebSocket not connected');
-        updateStatus('Not connected to signaling server', 'error');
     }
 }
 
@@ -408,7 +402,6 @@ function initVideoTexture(canvas, stream, canvasId) {
     videoElement.addEventListener("canplaythrough", () => {
         videoElement.play().catch(err => { 
             console.error("Error playing video:", err); 
-            updateStatus(`Error playing ${canvasId} video: ${err.message}`, 'error');
         });
         if (intervalID) clearInterval(intervalID);
         intervalID = setInterval(() => {
@@ -437,7 +430,7 @@ function initVideoTexture(canvas, stream, canvasId) {
 
 async function startLocalVideo() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        updateStatus("getUserMedia is not supported in this browser", 'error');
+        console.error("getUserMedia is not supported in this browser");
         return;
     }
     
@@ -454,12 +447,9 @@ async function startLocalVideo() {
         
         const localCanvas = canvases['localVideo'].canvas;
         initCanvasGL(localCanvas);
-        initVideoTexture(localCanvas, localStream, 'local');
-        
-        updateStatus("Local camera started. Waiting for peer...", 'success');
+        initVideoTexture(localCanvas, localStream, 'local');        
         console.log('Local camera started');
     } catch (error) {
-        updateStatus(`Failed to get local stream: ${error.message}`, 'error');
         console.error("Error accessing media devices:", error);
     }
 }
@@ -488,7 +478,6 @@ async function createPeerConnection(peerId, peerName) {
         const remoteCanvas = canvases[canvasId].canvas;
         initCanvasGL(remoteCanvas);
         initVideoTexture(remoteCanvas, event.streams[0], canvasId);
-        updateStatus(`Remote stream received from "${peerName}"!`, 'success');
     };
     
     // Handle ICE candidates
@@ -508,7 +497,7 @@ async function createPeerConnection(peerId, peerName) {
     pc.onconnectionstatechange = () => {
         console.log(`Connection state with peer ${peerId}:`, pc.connectionState);
         if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-            updateStatus(`Connection with peer ${peerId} ${pc.connectionState}`, 'error');
+            console.error(`Connection with peer ${peerId} ${pc.connectionState}`);
         }
     };
     
@@ -535,9 +524,7 @@ async function createAndSendOffer(targetId, peerName) {
         });
         
         console.log(`Sent offer to "${peerName}" (Client ${targetId})`);
-        updateStatus(`Calling "${peerName}"...`, 'status');
     } catch (error) {
-        updateStatus(`Error creating offer: ${error.message}`, 'error');
         console.error("Error creating offer:", error);
     }
 }
@@ -552,7 +539,6 @@ async function handleAnswer(answer, peerId) {
         
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         const peerName = remotePeers[peerId]?.name || `Peer ${peerId}`;
-        updateStatus(`Connected to "${peerName}"!`, 'success');
         console.log(`Connection established with "${peerName}"`);
         
         // Update remote peer info if canvas exists
@@ -561,7 +547,6 @@ async function handleAnswer(answer, peerId) {
             remotePeerInfo.textContent = `${peerName} (ID: ${peerId})`;
         }
     } catch (error) {
-        updateStatus(`Error handling answer: ${error.message}`, 'error');
         console.error("Error handling answer:", error);
     }
 }
@@ -569,7 +554,7 @@ async function handleAnswer(answer, peerId) {
 async function handleOffer(offer, senderId, peerName) {
     try {
         if (!localStream) {
-            updateStatus(`Received call from "${peerName}" but camera not started. Starting camera...`, 'status');
+            console.log(`Received call from "${peerName}" but camera not started. Starting camera...`);
             await startLocalVideo();
         }
         
@@ -588,7 +573,6 @@ async function handleOffer(offer, senderId, peerName) {
         });
         
         console.log(`Answered call from "${peerName}"`);
-        updateStatus(`Answering call from "${peerName}"...`, 'status');
         
         // Update remote peer info if canvas exists
         const remotePeerInfo = document.getElementById(`remote-${senderId}PeerInfo`);
@@ -596,7 +580,6 @@ async function handleOffer(offer, senderId, peerName) {
             remotePeerInfo.textContent = `${peerName} (ID: ${senderId})`;
         }
     } catch (error) {
-        updateStatus(`Error handling offer: ${error.message}`, 'error');
         console.error("Error handling offer:", error);
     }
 }
@@ -608,7 +591,7 @@ function sendChatMessage() {
     if (!text) return;
     
     if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
-        updateStatus('Not connected to server. Cannot send message.', 'error');
+        console.error('Not connected to server. Cannot send message.');
         return;
     }
     
@@ -662,12 +645,6 @@ function handleChatKeyPress(event) {
     }
 }
 
-function updateStatus(message, type = 'status') {
-    const statusDiv = document.getElementById('status');
-    statusDiv.textContent = message;
-    statusDiv.className = 'status ' + type;
-}
-
 function loadCredentialsFromCookies() {
     const savedUsername = getCookie('webrtc_username');
     const urlRoomId = getUrlParameter('roomid');
@@ -693,8 +670,19 @@ function loadCredentialsFromCookies() {
 function webGLStart() {
     addEventHandlers();
     loadCredentialsFromCookies();
-    startLocalVideo();    
-    updateStatus("Ready. Connect to signaling server first.", 'status');
+    startLocalVideo();
+    
+    // Add input validation for connection button
+    const userName = document.getElementById('userName');
+    const roomId = document.getElementById('roomId');
+    if (userName && roomId) {
+        userName.addEventListener('input', validateConnectionButton);
+        roomId.addEventListener('input', validateConnectionButton);
+        // Initial validation
+        validateConnectionButton();
+    }
+    
+    console.log("Ready. Connect to signaling server first.");
 }
 
 // Handle window resize to rebalance grid
