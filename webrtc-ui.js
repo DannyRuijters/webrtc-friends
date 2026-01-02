@@ -111,63 +111,36 @@ function removeVideoCanvas(canvasId) {
 }
 
 function rebalanceVideoGrid() {
-    const videoGrid = document.getElementById('videoGrid');
     const numCanvases = Object.keys(canvases).length;
+    if (numCanvases === 0) return;
     
-    if (numCanvases === 0) {
-        return;
-    }
+    const videoGrid = document.getElementById('videoGrid');
+    const rect = videoGrid.getBoundingClientRect();
     
-    // Calculate maximum size based on viewport and available space
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Get actual available space in the video grid
-    const videoGridRect = videoGrid.getBoundingClientRect();
-    const availableWidth = videoGridRect.width || (viewportWidth - 40); // Fallback to viewport minus margins
-    const availableHeight = videoGridRect.height || (viewportHeight - 200); // Fallback
-    
-    // Calculate size accounting for gaps between canvases
-    const gapSize = 20; // matches CSS gap
+    // Calculate available space accounting for gaps
+    const gapSize = 20;
+    const availableWidth = rect.width || (window.innerWidth - 40);
+    const availableHeight = rect.height || (window.innerHeight - 200);
     const totalGaps = Math.max(0, (numCanvases - 1) * gapSize);
-    const maxCanvasWidth = Math.floor((availableWidth - totalGaps) / numCanvases);
-    const maxCanvasHeight = availableHeight;
     
-    // Use the minimum to ensure square canvases that fit
-    let maxSize = Math.min(maxCanvasWidth, maxCanvasHeight);
+    // Calculate size (square canvases with minimum 200px)
+    const maxWidth = Math.floor((availableWidth - totalGaps) / numCanvases);
+    const size = Math.max(200, Math.min(maxWidth, availableHeight));
     
-    // Ensure minimum size for mobile devices
-    const minSize = 200;
-    maxSize = Math.max(maxSize, minSize);
-    
-    // Set all canvases to exactly the same size
-    Object.keys(canvases).forEach(canvasId => {
-        const container = canvases[canvasId].container;
-        const canvas = canvases[canvasId].canvas;
-        // Set equal flex basis for all containers (container matches canvas size exactly)
-        container.style.flex = `0 0 ${maxSize}px`;
-        container.style.width = `${maxSize}px`;
-        container.style.minWidth = `${maxSize}px`;
-        container.style.maxWidth = `${maxSize}px`;
-        // Force canvas to be exactly the same size
-        canvas.style.width = `${maxSize}px`;
-        canvas.style.height = `${maxSize}px`;
-        canvas.style.minWidth = `${maxSize}px`;
-        canvas.style.maxWidth = `${maxSize}px`;
-        canvas.style.minHeight = `${maxSize}px`;
-        canvas.style.maxHeight = `${maxSize}px`;
+    // Apply size to all canvases
+    Object.values(canvases).forEach(({ container, canvas }) => {
+        container.style.flex = `0 0 ${size}px`;
+        container.style.width = `${size}px`;
+        canvas.style.width = `${size}px`;
+        canvas.style.height = `${size}px`;
         
-        // Update canvas drawing buffer size to match display size
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const bufferWidth = maxSize * devicePixelRatio;
-        const bufferHeight = maxSize * devicePixelRatio;
-        if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
-            canvas.width = bufferWidth;
-            canvas.height = bufferHeight;
-            // Re-render if GL context exists
-            if (canvas.gl && canvas.gl.myTexture) {
-                const texture = canvas.gl.myTexture;
-                cubicFilter(canvas.gl, texture, canvas.width, canvas.height);
+        // Update drawing buffer
+        const dpr = window.devicePixelRatio || 1;
+        const bufferSize = size * dpr;
+        if (canvas.width !== bufferSize || canvas.height !== bufferSize) {
+            canvas.width = canvas.height = bufferSize;
+            if (canvas.gl?.myTexture) {
+                cubicFilter(canvas.gl, canvas.gl.myTexture, bufferSize, bufferSize);
             }
         }
     });
