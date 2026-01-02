@@ -713,7 +713,7 @@ function initChatResize() {
         const newWidth = startWidth + deltaX;
         
         // Set min and max width constraints
-        const minWidth = 250;
+        const minWidth = 150;
         const maxWidth = window.innerWidth * 0.6;
         
         if (newWidth >= minWidth && newWidth <= maxWidth) {
