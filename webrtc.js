@@ -218,7 +218,7 @@ function disconnectFromServer() {
     remotePeers = {};
     
     updateStatus("Disconnected from server (local video still active)", 'status');
-    addLogMessage('Disconnected from server');
+    console.log('Disconnected from server');
 }
 
 async function handleSignalingMessage(message) {
@@ -229,7 +229,7 @@ async function handleSignalingMessage(message) {
             myClientId = message.clientId;
             const peersInRoom = message.peersInRoom || (message.totalClients - 1);
             updateStatus(`Connected as "${myName}" (Client ${myClientId}) in room "${roomId}". Peers in room: ${peersInRoom}`, 'success');
-            addLogMessage(`You are "${myName}" (Client ${myClientId}) in room "${roomId}"`);
+            console.log(`You are "${myName}" (Client ${myClientId}) in room "${roomId}"`);
             // Update local peer info if canvas exists
             const localPeerInfo = document.getElementById('localVideoPeerInfo');
             if (localPeerInfo) {
@@ -249,7 +249,7 @@ async function handleSignalingMessage(message) {
                 // Track the new peer
                 remotePeers[peerId] = { name: peerName };
                 
-                addLogMessage(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
+                console.log(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
                 updateStatus(`"${peerName}" joined. Total peers: ${Object.keys(remotePeers).length}`, 'success');
                 
                 // If we have local stream and no existing connection to this peer, automatically call
@@ -263,7 +263,7 @@ async function handleSignalingMessage(message) {
             
         case 'peer-disconnected':
             const disconnectedPeerId = message.clientId;
-            addLogMessage(`Peer ${disconnectedPeerId} disconnected`);
+            console.log(`Peer ${disconnectedPeerId} disconnected`);
             
             if (remotePeers[disconnectedPeerId]) {
                 const peerName = remotePeers[disconnectedPeerId].name;
@@ -287,7 +287,7 @@ async function handleSignalingMessage(message) {
             const senderIdOffer = message.senderId;
             const peerNameOffer = message.peerName || `Peer-${senderIdOffer}`;
             remotePeers[senderIdOffer] = { name: peerNameOffer };
-            addLogMessage(`Received offer from "${peerNameOffer}" (Client ${senderIdOffer})`);
+            console.log(`Received offer from "${peerNameOffer}" (Client ${senderIdOffer})`);
             await handleOffer(message.offer, senderIdOffer, peerNameOffer);
             break;
             
@@ -297,7 +297,7 @@ async function handleSignalingMessage(message) {
             if (message.peerName) {
                 remotePeers[senderIdAnswer] = { name: peerNameAnswer };
             }
-            addLogMessage(`Received answer from "${peerNameAnswer}" (Client ${senderIdAnswer})`);
+            console.log(`Received answer from "${peerNameAnswer}" (Client ${senderIdAnswer})`);
             await handleAnswer(message.answer, senderIdAnswer);
             break;
             
@@ -376,7 +376,7 @@ async function startLocalVideo() {
         initVideoTexture(localCanvas, localStream, 'local');
         
         updateStatus("Local camera started. Waiting for peer...", 'success');
-        addLogMessage('Local camera started');
+        console.log('Local camera started');
     } catch (error) {
         updateStatus(`Failed to get local stream: ${error.message}`, 'error');
         console.error("Error accessing media devices:", error);
@@ -454,7 +454,7 @@ async function createAndSendOffer(targetId, peerName) {
             roomId: roomId
         });
         
-        addLogMessage(`Sent offer to "${peerName}" (Client ${targetId})`);
+        console.log(`Sent offer to "${peerName}" (Client ${targetId})`);
         updateStatus(`Calling "${peerName}"...`, 'status');
     } catch (error) {
         updateStatus(`Error creating offer: ${error.message}`, 'error');
@@ -473,7 +473,7 @@ async function handleAnswer(answer, peerId) {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         const peerName = remotePeers[peerId]?.name || `Peer ${peerId}`;
         updateStatus(`Connected to "${peerName}"!`, 'success');
-        addLogMessage(`Connection established with "${peerName}"`);
+        console.log(`Connection established with "${peerName}"`);
         
         // Update remote peer info if canvas exists
         const remotePeerInfo = document.getElementById(`remote-${peerId}PeerInfo`);
@@ -507,7 +507,7 @@ async function handleOffer(offer, senderId, peerName) {
             roomId: roomId
         });
         
-        addLogMessage(`Answered call from "${peerName}"`);
+        console.log(`Answered call from "${peerName}"`);
         updateStatus(`Answering call from "${peerName}"...`, 'status');
         
         // Update remote peer info if canvas exists
@@ -519,15 +519,6 @@ async function handleOffer(offer, senderId, peerName) {
         updateStatus(`Error handling offer: ${error.message}`, 'error');
         console.error("Error handling offer:", error);
     }
-}
-
-function addLogMessage(message) {
-    const logDiv = document.getElementById('signalingLog');
-    const timestamp = new Date().toLocaleTimeString();
-    const logEntry = document.createElement('div');
-    logEntry.textContent = `[${timestamp}] ${message}`;
-    logDiv.appendChild(logEntry);
-    logDiv.scrollTop = logDiv.scrollHeight;
 }
 
 function sendChatMessage() {
