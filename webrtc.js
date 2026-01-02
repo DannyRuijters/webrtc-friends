@@ -43,6 +43,48 @@ function getUrlParameter(name) {
     return urlParams.get(name);
 }
 
+function setupWebGLContextHandlers(canvas, canvasId) {
+    // Handle WebGL context lost
+    canvas.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        console.warn(`WebGL context lost for ${canvasId}`);
+        updateStatus(`WebGL context lost for ${canvasId}. Attempting to restore...`, 'error');
+        
+        // Stop the video update interval
+        if (canvas.intervalID) {
+            clearInterval(canvas.intervalID);
+            canvas.intervalID = null;
+        }
+        
+        // Mark context as lost
+        canvas.contextLost = true;
+    }, false);
+    
+    // Handle WebGL context restored
+    canvas.addEventListener('webglcontextrestored', (event) => {
+        console.log(`WebGL context restored for ${canvasId}`);
+        updateStatus(`WebGL context restored for ${canvasId}`, 'success');
+        
+        // Mark context as not lost
+        canvas.contextLost = false;
+        
+        try {
+            // Reinitialize WebGL
+            initCanvasGL(canvas);
+            
+            // Restore video if stream exists
+            if (canvas.videoElement && canvas.videoElement.srcObject) {
+                const stream = canvas.videoElement.srcObject;
+                initVideoTexture(canvas, stream, canvasId);
+                console.log(`Video stream restored for ${canvasId}`);
+            }
+        } catch (error) {
+            console.error(`Error restoring WebGL context for ${canvasId}:`, error);
+            updateStatus(`Failed to restore WebGL context for ${canvasId}: ${error.message}`, 'error');
+        }
+    }, false);
+}
+
 function createVideoCanvas(canvasId, title, peerInfo) {
     const videoGrid = document.getElementById('videoGrid');
     
@@ -77,6 +119,9 @@ function createVideoCanvas(canvasId, title, peerInfo) {
     // Add mouse events for the new canvas
     addMouseEvents(canvas);
     
+    // Add WebGL context lost/restored handlers
+    setupWebGLContextHandlers(canvas, canvasId);
+    
     // Rebalance grid layout
     rebalanceVideoGrid();
     
@@ -89,6 +134,23 @@ function removeVideoCanvas(canvasId) {
         // Clear interval if exists
         if (canvasData.canvas.intervalID) {
             clearInterval(canvasData.canvas.intervalID);
+        }
+        // Clean up WebGL context
+        if (canvasData.canvas.gl) {
+            try {
+                const gl = canvasData.canvas.gl;
+                // Free WebGL resources
+                if (typeof freeResources === 'function') {
+                    freeResources(gl);
+                }
+                // Delete texture if exists
+                if (gl.myTexture) {
+                    gl.deleteTexture(gl.myTexture);
+                    gl.myTexture = null;
+                }
+            } catch (e) {
+                console.error(`Error cleaning up WebGL for ${canvasId}:`, e);
+            }
         }
         // Remove from DOM
         if (canvasData.container && canvasData.container.parentNode) {
@@ -339,18 +401,28 @@ function initVideoTexture(canvas, stream, canvasId) {
             updateStatus(`Error playing ${canvasId} video: ${err.message}`, 'error');
         });
         if (intervalID) clearInterval(intervalID);
-        intervalID = setInterval(() => { 
-            handleLoadedImage(canvas, videoElement, videoElement.videoWidth, videoElement.videoHeight); 
+        intervalID = setInterval(() => {
+            // Skip rendering if WebGL context is lost
+            if (!canvas.contextLost && canvas.gl && typeof handleLoadedImage === 'function') {
+                try {
+                    handleLoadedImage(canvas, videoElement, videoElement.videoWidth, videoElement.videoHeight);
+                } catch (error) {
+                    // If error occurs during rendering, it might be context loss
+                    if (!canvas.contextLost) {
+                        console.error(`Error rendering ${canvasId}:`, error);
+                    }
+                }
+            }
         }, 15);
+        canvas.intervalID = intervalID;
     });
     
     videoElement.addEventListener("ended", () => { 
         if (intervalID) clearInterval(intervalID); 
     });
     
-    // Store reference for cleanup
+    // Store reference for cleanup and restoration
     canvas.videoElement = videoElement;
-    canvas.intervalID = intervalID;
 }
 
 async function startLocalVideo() {
