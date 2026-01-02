@@ -729,12 +729,14 @@ function initChatResize() {
         const newWidth = startWidth + deltaX;
         
         // Set min and max width constraints
-        const minWidth = window.innerWidth * 0.1;
+        const minWidth = Math.max(250, window.innerWidth * 0.1);
         const maxWidth = window.innerWidth * 0.6;
         
-        if (newWidth >= minWidth && newWidth <= maxWidth) {
-            chatContainer.style.flex = `0 0 ${newWidth}px`;
-        }
+        const constrainedWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+        chatContainer.style.flex = `0 0 ${constrainedWidth}px`;
+        chatContainer.style.minWidth = `${constrainedWidth}px`;
+        chatContainer.style.maxWidth = `${constrainedWidth}px`;
+        chatContainer.style.width = `${constrainedWidth}px`;
     }
     
     function stopResize() {
