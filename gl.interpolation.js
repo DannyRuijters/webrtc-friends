@@ -171,8 +171,8 @@ function cubicFilter(gl, texture, width, height) {
         const canvasAspect = width / height;
         const scaleX = (canvasAspect > textureAspect) ? 1.0 : (canvasAspect /textureAspect);
         const scaleY = (canvasAspect > textureAspect) ? (textureAspect / canvasAspect) : 1.0;
-        const matrix = [gl.zoom * scaleX, 0.0, 0.0, 0.0, gl.zoom * scaleY, 0.0, gl.translateX, gl.translateY, 1.0];
-        gl.uniformMatrix3fv(gl.shaderSimple.matrixUniform, false, matrix);
+        texture.matrix = [gl.zoom * scaleX, 0.0, 0.0, 0.0, gl.zoom * scaleY, 0.0, gl.translateX, gl.translateY, 1.0];
+        gl.uniformMatrix3fv(gl.shaderSimple.matrixUniform, false, texture.matrix);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);

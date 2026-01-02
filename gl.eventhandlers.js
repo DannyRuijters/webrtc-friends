@@ -28,8 +28,8 @@ function handleMouseMove(event) {
         const canvas = lastCanvas;
         const gl = canvas.gl;
         const texture = gl.myTexture;
-        gl.translateX -= deltaX * gl.zoom / texture.width;
-        gl.translateY += deltaY * gl.zoom / texture.height;
+        gl.translateX -= deltaX * texture.matrix[0] / canvas.width;
+        gl.translateY += deltaY * texture.matrix[4] / canvas.height;
         
         cubicFilter(gl, texture, canvas.width, canvas.height);
         //window.requestAnimFrame(tick);
@@ -94,7 +94,7 @@ function handleTouchMove(event) {
         // Check if this is primarily a zoom gesture (distance change > 5px)
         const distanceChange = Math.abs(currentDistance - lastTouchDistance);
         
-        if (distanceChange > 5) {
+        if (distanceChange > 10) {
             // Pinch to zoom
             const scale = currentDistance / lastTouchDistance;
             gl.zoom = touchStartZoom / scale;
@@ -104,8 +104,8 @@ function handleTouchMove(event) {
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
             
-            gl.translateX -= deltaX * gl.zoom / texture.width;
-            gl.translateY += deltaY * gl.zoom / texture.height;
+            gl.translateX -= deltaX * texture.matrix[0] / canvas.width;
+            gl.translateY += deltaY * texture.matrix[4] / canvas.height;
         }
         
         lastTouchCenterX = center.x;
