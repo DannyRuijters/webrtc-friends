@@ -175,11 +175,11 @@ function rebalanceVideoGrid() {
     Object.keys(canvases).forEach(canvasId => {
         const container = canvases[canvasId].container;
         const canvas = canvases[canvasId].canvas;
-        // Set equal flex basis for all containers
-        container.style.flex = `0 0 ${maxSize + 50}px`;
-        container.style.width = `${maxSize + 50}px`;
-        container.style.minWidth = `${maxSize + 50}px`;
-        container.style.maxWidth = `${maxSize + 50}px`;
+        // Set equal flex basis for all containers (container matches canvas size exactly)
+        container.style.flex = `0 0 ${maxSize}px`;
+        container.style.width = `${maxSize}px`;
+        container.style.minWidth = `${maxSize}px`;
+        container.style.maxWidth = `${maxSize}px`;
         // Force canvas to be exactly the same size
         canvas.style.width = `${maxSize}px`;
         canvas.style.height = `${maxSize}px`;
