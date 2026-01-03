@@ -84,7 +84,7 @@ function rebalanceVideoGrid() {
     const rect = videoGrid.getBoundingClientRect();
     
     // Calculate available space accounting for gaps
-    const gapSize = 20;
+    const gapSize = 10;
     const availableWidth = rect.width || (window.innerWidth - 40);
     const availableHeight = rect.height || (window.innerHeight - 200);
     const totalGaps = Math.max(0, (numCanvases - 1) * gapSize);

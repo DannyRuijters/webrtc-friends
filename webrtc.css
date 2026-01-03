@@ -1,8 +1,10 @@
 body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
 .container { max-width: 100%; margin: 0 auto; }
-.content-wrapper { display: flex; flex-direction: column; gap: 20px; }
+.content-wrapper { display: flex; flex-direction: column; gap: 10px; }
 .video-section { flex: 1; min-width: 0; }
-.video-grid { display: flex; flex-direction: row; gap: 20px; margin-bottom: 20px; flex-wrap: nowrap; overflow-x: auto; width: 100%; height: 100%; }
+.video-grid { display: flex; flex-direction: row; gap: 10px; margin-bottom: 20px; flex-wrap: nowrap; 
+    overflow-x: auto; width: 100%; height: 100%; 
+}
 
 /* Wide screen layout - chat on the right */
 @media (min-aspect-ratio: 1/1) {
@@ -45,7 +47,7 @@ button:disabled { background: #cccccc; cursor: not-allowed; }
 .success { background: #e8f5e9; border-left-color: #4CAF50; }
 input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .chat-container { background: white; padding: 10px 20px 20px; border-radius: 8px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 0px; position: relative; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 0; margin-bottom: 0; position: relative; 
     width: 100%; box-sizing: border-box; 
 }
 .chat-container h2 { margin-top: 5px; margin-bottom: 10px; }
