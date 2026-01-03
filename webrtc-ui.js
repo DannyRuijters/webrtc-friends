@@ -1,3 +1,7 @@
+// Copyright (c) 2025-2026, Danny Ruijters. All rights reserved.
+// See LICENSE file for terms and conditions.
+// https://github.com/dannyruijters/webrtc-friends
+
 function setupWebGLContextHandlers(canvas, canvasId) {
     // Handle WebGL context lost
     canvas.addEventListener('webglcontextlost', (event) => {

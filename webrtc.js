@@ -1,3 +1,7 @@
+// Copyright (c) 2025-2026, Danny Ruijters. All rights reserved.
+// See LICENSE file for terms and conditions.
+// https://github.com/dannyruijters/webrtc-friends
+
 let localStream = null;
 let peerConnections = {}; // Track peer connections by peer ID
 let canvases = {}; // Track canvases by id: { local: {canvas, container}, remote-{peerId}: {canvas, container} }

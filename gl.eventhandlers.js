@@ -1,3 +1,7 @@
+// Copyright (c) 2025-2026, Danny Ruijters. All rights reserved.
+// See LICENSE file for terms and conditions.
+// https://github.com/dannyruijters/webrtc-friends
+
 let lastMouseX = 0;
 let lastMouseY = 0;
 let lastCanvas = null;

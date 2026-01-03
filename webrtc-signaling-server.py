@@ -6,6 +6,10 @@ Simple signaling server to exchange SDP offers/answers and ICE candidates
 
 Usage: python signaling-server.py [--port PORT]
 Default port: 8080
+
+Copyright (c) 2025-2026, Danny Ruijters. All rights reserved.
+See LICENSE file for terms and conditions.
+https://github.com/dannyruijters/webrtc-friends
 """
 
 import asyncio
