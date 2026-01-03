@@ -1,4 +1,4 @@
-body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
 .container { max-width: 100%; margin: 0 auto; }
 .content-wrapper { display: flex; flex-direction: column; gap: 20px; }
 .video-section { flex: 1; min-width: 0; }
@@ -24,7 +24,7 @@ canvas { border-radius: 8px; display: blocsk; object-fit: cover; width: 100%; he
 .controls { background: white; padding: 10px 20px 2px; border-radius: 8px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px; 
 }
-.controls-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+.controls-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .input-group { display: flex; align-items: center; gap: 5px; margin: 0; }
 .input-group label { display: inline-block; width: auto; font-weight: bold; white-space: nowrap; }
 button { padding: 10px 20px; margin: 5px; font-size: 14px; cursor: pointer; background: #5d81cf;
@@ -44,7 +44,7 @@ button:disabled { background: #cccccc; cursor: not-allowed; }
 .error { background: #ffebee; border-left-color: #f44336; }
 .success { background: #e8f5e9; border-left-color: #4CAF50; }
 input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-.chat-container { background: white; padding: 10px 20px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
+.chat-container { background: white; padding: 10px 20px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; width: 100%; }
 .chat-container h2 { margin-top: 5px; margin-bottom: 10px; }
 .resize-handle { position: absolute; left: 0; top: 0; bottom: 0; width: 40px; cursor: ew-resize; z-index: 100; background: transparent; }
 .resize-handle::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: transparent; }
