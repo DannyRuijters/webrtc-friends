@@ -2,7 +2,7 @@ body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
 .container { max-width: 100%; margin: 0 auto; }
 .content-wrapper { display: flex; flex-direction: column; gap: 10px; }
 .video-section { flex: 1; min-width: 0; }
-.video-grid { display: flex; flex-direction: row; gap: 10px; margin-bottom: 20px; flex-wrap: nowrap; 
+.video-grid { display: flex; flex-direction: row; gap: 10px; margin-bottom: 0; flex-wrap: nowrap; 
     overflow-x: auto; width: 100%; height: 100%; 
 }
 
