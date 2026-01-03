@@ -3,38 +3,27 @@
 // https://github.com/dannyruijters/webrtc-friends
 
 function setupWebGLContextHandlers(canvas, canvasId) {
-    // Handle WebGL context lost
     canvas.addEventListener('webglcontextlost', (event) => {
         event.preventDefault();
         console.warn(`WebGL context lost for ${canvasId}`);
-        
-        // Stop the video update interval
-        if (canvas.intervalID) {
-            clearInterval(canvas.intervalID);
-            canvas.intervalID = null;
-        }
-        
-        // Mark context as lost
+        if (canvas.intervalID) clearInterval(canvas.intervalID);
         canvas.contextLost = true;
     }, false);
     
-    // Handle WebGL context restored
-    canvas.addEventListener('webglcontextrestored', (event) => {
+    canvas.addEventListener('webglcontextrestored', () => {
         console.log(`WebGL context restored for ${canvasId}`);
-        
-        // Mark context as not lost
         canvas.contextLost = false;
         
         try {
-            // Reinitialize WebGL
             initCanvasGL(canvas);
+            if (!canvas.videoElement?.srcObject) return;
             
-            // Restore video if stream exists
-            if (canvas.videoElement && canvas.videoElement.srcObject) {
-                const stream = canvas.videoElement.srcObject;
-                initVideoTexture(canvas, stream, canvasId);
-                console.log(`Video stream restored for ${canvasId}`);
-            }
+            const videoElement = canvas.videoElement;
+            canvas.intervalID = setInterval(() => {
+                if (!canvas.contextLost && canvas.gl) {
+                    handleLoadedImage(canvas, videoElement, videoElement.videoWidth, videoElement.videoHeight);
+                }
+            }, 15);
         } catch (error) {
             console.error(`Error restoring WebGL context for ${canvasId}:`, error);
         }
