@@ -8,6 +8,8 @@ function setupWebGLContextHandlers(canvas, canvasId) {
         console.warn(`WebGL context lost for ${canvasId}`);
         if (canvas.intervalID) clearInterval(canvas.intervalID);
         canvas.contextLost = true;
+        canvas.gl.myTexture = null; // Invalidate texture
+        canvas.gl = null;
     }, false);
     
     canvas.addEventListener('webglcontextrestored', () => {
