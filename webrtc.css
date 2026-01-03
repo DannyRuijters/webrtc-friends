@@ -56,3 +56,10 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
 .chat-input-group { display: flex; gap: 10px; }
 .chat-input-group input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .chat-input-group button { padding: 10px 20px; min-width: 80px; }
+
+/* Overlay styles */
+.overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+.overlay.active { display: block; }
+.overlay-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; border-radius: 8px; width: 80%; max-width: 600px; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+.overlay-close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px; }
+.overlay-close:hover, .overlay-close:focus { color: #000; text-decoration: none; }

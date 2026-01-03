@@ -27,6 +27,16 @@
                     <input type="text" id="roomId" placeholder="Enter room ID (e.g., meeting123)" title="All participants need to fill in the same Room identifier" />
                 </div>
                 <button id="connectionBtn" onclick="toggleConnection()">Connect</button>
+                <button id="overlayBtn" onclick="openOverlay()">&#9881;</button>
+            </div>
+        </div>
+        
+        <!-- Overlay Window -->
+        <div id="overlay" class="overlay">
+            <div class="overlay-content">
+                <span class="overlay-close" onclick="closeOverlay()">&times;</span>
+                <h2>Overlay Window</h2>
+                <p>This is your overlay window content.</p>
             </div>
         </div>
         

@@ -386,4 +386,21 @@ window.addEventListener('resize', () => {
     }
 });
 
+// Overlay window functions
+function openOverlay() {
+    document.getElementById('overlay').classList.add('active');
+}
+
+function closeOverlay() {
+    document.getElementById('overlay').classList.remove('active');
+}
+
+// Close overlay when clicking outside the content
+window.addEventListener('click', (event) => {
+    const overlay = document.getElementById('overlay');
+    if (event.target === overlay) {
+        closeOverlay();
+    }
+});
+
 window.addEventListener('DOMContentLoaded', webGLStart);
