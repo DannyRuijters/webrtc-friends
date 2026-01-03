@@ -21,32 +21,6 @@ const configuration = {
     ]
 };
 
-// Cookie helper functions
-function setCookie(name, value, days = 365) {
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = "expires=" + date.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
-}
-
-function getCookie(name) {
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) {
-            return decodeURIComponent(c.substring(nameEQ.length, c.length));
-        }
-    }
-    return null;
-}
-
-function getUrlParameter(name) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(name);
-}
-
 function toggleConnection() {
     if (signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
         disconnectFromServer();
@@ -355,31 +329,27 @@ async function handleOffer(offer, senderId, peerName) {
     }
 }
 
-function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    
-    if (!text) return;
-    
-    if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
-        console.error('Not connected to server. Cannot send message.');
-        return;
+function updateConnectionButton(connected) {
+    const btn = document.getElementById('connectionBtn');
+    if (connected) {
+        btn.textContent = 'Disconnect';
+        btn.classList.add('disconnect');
+        btn.disabled = false;
+    } else {
+        btn.textContent = 'Connect';
+        btn.classList.remove('disconnect');
+        validateConnectionButton();
     }
+}
+
+function validateConnectionButton() {
+    const btn = document.getElementById('connectionBtn');
+    const userName = document.getElementById('userName');
+    const roomId = document.getElementById('roomId');
     
-    const timestamp = new Date().toISOString();
-    
-    // Send to server
-    sendSignalingMessage({
-        type: 'chat',
-        text: text,
-        senderName: myName,
-        roomId: roomId,
-        timestamp: timestamp
-    });
-    
-    // Display own message
-    displayChatMessage(text, 'You', true, timestamp);
-    
-    // Clear input
-    input.value = '';
+    // Only validate if button is in connect mode (not disconnect)
+    if (!btn.classList.contains('disconnect')) {
+        const isValid = userName.value.trim() !== '' && roomId.value.trim() !== '';
+        btn.disabled = !isValid;
+    }
 }
