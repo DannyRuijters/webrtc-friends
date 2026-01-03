@@ -48,7 +48,7 @@ function createVideoCanvas(canvasId, title) {
     // Create canvas (will be positioned behind overlays)
     const canvas = document.createElement('canvas');
     canvas.id = canvasId;
-    canvas.className = 'gl.cubicinterpolation';
+    canvas.className = 'video-canvas';
     canvas.width = 640;
     canvas.height = 640;
     container.appendChild(canvas);
@@ -140,7 +140,7 @@ function rebalanceVideoGrid() {
         if (canvas.width !== bufferSize || canvas.height !== bufferSize) {
             canvas.width = canvas.height = bufferSize;
             if (canvas.gl?.myTexture) {
-                cubicFilter(canvas.gl, canvas.gl.myTexture, bufferSize, bufferSize);
+                linearFilter(canvas.gl, canvas.gl.myTexture, bufferSize, bufferSize);
             }
         }
     });

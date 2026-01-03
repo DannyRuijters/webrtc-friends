@@ -160,7 +160,7 @@ function drawTexture(gl, shader) {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.textureCoordBuffer.numItems);
 }
 
-function cubicFilter(gl, texture, width, height) {
+function linearFilter(gl, texture, width, height) {
     if (gl.shaderSimple) {
         // Draw final image
         gl.bindFramebuffer(gl.FRAMEBUFFER, gl.buffer);
@@ -199,5 +199,5 @@ function handleLoadedImage(canvas, image, width, height) {
         gl.myTexture = texture;
     }
 
-    cubicFilter(gl, texture, canvas.width, canvas.height);
+    linearFilter(gl, texture, canvas.width, canvas.height);
 }

@@ -31,7 +31,7 @@ function handleMouseMove(event) {
         gl.translateX -= deltaX * texture.matrix[0] / canvas.width;
         gl.translateY += deltaY * texture.matrix[4] / canvas.height;
         
-        cubicFilter(gl, texture, canvas.width, canvas.height);
+        linearFilter(gl, texture, canvas.width, canvas.height);
         //window.requestAnimFrame(tick);
         event.preventDefault();
     }
@@ -46,7 +46,7 @@ function handleMouseWheel(event) {
     gl.zoom -= 0.1 * delta;
     if (gl.zoom < 0.001) gl.zoom = 0.001;  //prevent negative or zero zoom
     const texture = gl.myTexture;
-    cubicFilter(gl, texture, canvas.width, canvas.height);
+    linearFilter(gl, texture, canvas.width, canvas.height);
     event.preventDefault();
     return false;
 }
@@ -111,7 +111,7 @@ function handleTouchMove(event) {
         lastTouchCenterX = center.x;
         lastTouchCenterY = center.y;
         
-        cubicFilter(gl, texture, canvas.width, canvas.height);
+        linearFilter(gl, texture, canvas.width, canvas.height);
         event.preventDefault();
     }
 }
@@ -147,7 +147,7 @@ function addMouseEvents(element) {
 
 function windowResize() {
     const devicePixelRatio = window.devicePixelRatio || 1;
-    const canvasArray = document.getElementsByClassName("gl.cubicinterpolation");
+    const canvasArray = document.getElementsByClassName("video-canvas");
     for (let index = 0; index < canvasArray.length; ++index) {
         const canvas = canvasArray[index];
         // set the size of the drawingBuffer based on the size it's displayed.
@@ -157,7 +157,7 @@ function windowResize() {
             canvas.width = width;
             canvas.height = height;
             const gl = canvas.gl;
-            cubicFilter(gl, gl.myTexture, canvas.width, canvas.height);
+            linearFilter(gl, gl.myTexture, canvas.width, canvas.height);
         }
     }
 }
