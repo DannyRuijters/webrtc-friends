@@ -97,6 +97,8 @@ function initChatResize() {
         chatContainer.style.minWidth = `${constrainedWidth}px`;
         chatContainer.style.maxWidth = `${constrainedWidth}px`;
         chatContainer.style.width = `${constrainedWidth}px`;
+
+        rebalanceVideoGrid();
     }
     
     function stopResize() {

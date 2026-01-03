@@ -46,7 +46,7 @@ button:disabled { background: #cccccc; cursor: not-allowed; }
 input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .chat-container { background: white; padding: 10px 20px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
 .chat-container h2 { margin-top: 5px; margin-bottom: 10px; }
-.resize-handle { position: absolute; left: 0; top: 0; bottom: 0; width: 20px; cursor: ew-resize; z-index: 100; background: transparent; }
+.resize-handle { position: absolute; left: 0; top: 0; bottom: 0; width: 40px; cursor: ew-resize; z-index: 100; background: transparent; }
 .resize-handle::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: transparent; }
 .resize-handle:hover::before { background: rgba(66, 133, 244, 0.3); }
 .resize-handle.resizing::before { background: rgba(66, 133, 244, 0.5); }
