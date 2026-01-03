@@ -31,7 +31,7 @@ function handleMouseMove(event) {
         gl.translateX -= deltaX * texture.matrix[0] / canvas.width;
         gl.translateY += deltaY * texture.matrix[4] / canvas.height;
         
-        linearFilter(gl, texture, canvas.width, canvas.height);
+        linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
         //window.requestAnimFrame(tick);
         event.preventDefault();
     }
@@ -46,7 +46,7 @@ function handleMouseWheel(event) {
     gl.zoom -= 0.1 * delta;
     if (gl.zoom < 0.001) gl.zoom = 0.001;  //prevent negative or zero zoom
     const texture = gl.myTexture;
-    linearFilter(gl, texture, canvas.width, canvas.height);
+    linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
     event.preventDefault();
     return false;
 }
@@ -111,7 +111,7 @@ function handleTouchMove(event) {
         lastTouchCenterX = center.x;
         lastTouchCenterY = center.y;
         
-        linearFilter(gl, texture, canvas.width, canvas.height);
+        linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
         event.preventDefault();
     }
 }
@@ -157,7 +157,7 @@ function windowResize() {
             canvas.width = width;
             canvas.height = height;
             const gl = canvas.gl;
-            linearFilter(gl, gl.myTexture, canvas.width, canvas.height);
+            linearFilter(gl, gl.myTexture, canvas.width, canvas.height, canvas.mirror);
         }
     }
 }
