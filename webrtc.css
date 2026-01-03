@@ -31,6 +31,8 @@ button { padding: 10px 20px; margin: 5px; font-size: 14px; cursor: pointer; back
     color: white; border: none; border-radius: 4px; transition: background 0.3s;
 }
 button:hover { background: #45a049; }
+#overlayBtn { background: #808080; }
+#overlayBtn:hover { background: #696969; }
 button.disconnect { background: #f44336; }
 button.disconnect:hover { background: #da190b; }
 button:disabled { background: #cccccc; cursor: not-allowed; }
@@ -63,3 +65,6 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
 .overlay-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; border-radius: 8px; width: 80%; max-width: 600px; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
 .overlay-close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px; }
 .overlay-close:hover, .overlay-close:focus { color: #000; text-decoration: none; }
+.overlay-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+.overlay-row label { min-width: 120px; font-weight: bold; }
+.overlay-row select { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }

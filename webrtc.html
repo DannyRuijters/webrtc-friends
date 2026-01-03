@@ -35,8 +35,15 @@
         <div id="overlay" class="overlay">
             <div class="overlay-content">
                 <span class="overlay-close" onclick="closeOverlay()">&times;</span>
-                <h2>Overlay Window</h2>
-                <p>This is your overlay window content.</p>
+                <h2>Settings</h2>
+                <div class="overlay-row">
+                    <label for="audioSource">Audio source:</label>
+                    <select id="audioSource" onchange="handleAudioSourceChange()"></select>
+                </div>
+                <div class="overlay-row">
+                    <label for="videoSource">Video source:</label>
+                    <select id="videoSource" onchange="handleVideoSourceChange()"></select>
+                </div>
             </div>
         </div>
         

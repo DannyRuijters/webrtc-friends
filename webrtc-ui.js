@@ -388,11 +388,62 @@ window.addEventListener('resize', () => {
 
 // Overlay window functions
 function openOverlay() {
+    populateMediaDevices();
     document.getElementById('overlay').classList.add('active');
 }
 
 function closeOverlay() {
     document.getElementById('overlay').classList.remove('active');
+}
+
+// Populate audio and video source dropdowns
+async function populateMediaDevices() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        
+        const audioSelect = document.getElementById('audioSource');
+        const videoSelect = document.getElementById('videoSource');
+        
+        // Clear existing options
+        audioSelect.innerHTML = '';
+        videoSelect.innerHTML = '';
+        
+        // Add audio sources
+        const audioDevices = devices.filter(device => device.kind === 'audioinput');
+        audioDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Microphone ${index + 1}`;
+            audioSelect.appendChild(option);
+        });
+        
+        // Add video sources
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Camera ${index + 1}`;
+            videoSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error enumerating devices:', error);
+    }
+}
+
+// Handle audio source change
+function handleAudioSourceChange() {
+    const audioSelect = document.getElementById('audioSource');
+    const selectedDeviceId = audioSelect.value;
+    console.log('Audio source changed to:', audioSelect.options[audioSelect.selectedIndex].text, selectedDeviceId);
+    // Add logic here to switch audio source
+}
+
+// Handle video source change
+function handleVideoSourceChange() {
+    const videoSelect = document.getElementById('videoSource');
+    const selectedDeviceId = videoSelect.value;
+    console.log('Video source changed to:', videoSelect.options[videoSelect.selectedIndex].text, selectedDeviceId);
+    // Add logic here to switch video source
 }
 
 // Close overlay when clicking outside the content
