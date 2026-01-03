@@ -160,7 +160,7 @@ function drawTexture(gl, shader) {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, gl.textureCoordBuffer.numItems);
 }
 
-function linearFilter(gl, texture, width, height) {
+function linearFilter(gl, texture, width, height, mirror) {
     if (gl.shaderSimple) {
         // Draw final image
         gl.bindFramebuffer(gl.FRAMEBUFFER, gl.buffer);
@@ -171,7 +171,11 @@ function linearFilter(gl, texture, width, height) {
         const canvasAspect = width / height;
         const scaleX = (canvasAspect > textureAspect) ? 1.0 : (canvasAspect /textureAspect);
         const scaleY = (canvasAspect > textureAspect) ? (textureAspect / canvasAspect) : 1.0;
-        texture.matrix = [gl.zoom * scaleX, 0.0, 0.0, 0.0, gl.zoom * scaleY, 0.0, gl.translateX, gl.translateY, 1.0];
+        const flipX = mirror ? -1.0 : 1.0;
+        texture.matrix = [
+            flipX * gl.zoom * scaleX, 0.0, 0.0, 
+            0.0, gl.zoom * scaleY, 0.0, 
+            gl.translateX, gl.translateY, 1.0 ];
         gl.uniformMatrix3fv(gl.shaderSimple.matrixUniform, false, texture.matrix);
 
         gl.activeTexture(gl.TEXTURE0);
@@ -199,5 +203,5 @@ function handleLoadedImage(canvas, image, width, height) {
         gl.myTexture = texture;
     }
 
-    linearFilter(gl, texture, canvas.width, canvas.height);
+    linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
 }

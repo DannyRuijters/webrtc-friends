@@ -37,7 +37,7 @@ function setupWebGLContextHandlers(canvas, canvasId) {
     }, false);
 }
 
-function createVideoCanvas(canvasId, title) {
+function createVideoCanvas(canvasId, title, mirror = false) {
     const videoGrid = document.getElementById('videoGrid');
     
     // Create container div with zero padding
@@ -51,6 +51,7 @@ function createVideoCanvas(canvasId, title) {
     canvas.className = 'video-canvas';
     canvas.width = 640;
     canvas.height = 640;
+    canvas.mirror = mirror;
     container.appendChild(canvas);
     
     // Create title overlay
@@ -140,7 +141,7 @@ function rebalanceVideoGrid() {
         if (canvas.width !== bufferSize || canvas.height !== bufferSize) {
             canvas.width = canvas.height = bufferSize;
             if (canvas.gl?.myTexture) {
-                linearFilter(canvas.gl, canvas.gl.myTexture, bufferSize, bufferSize);
+                linearFilter(canvas.gl, canvas.gl.myTexture, canvas.width, canvas.height, canvas.mirror);
             }
         }
     });
@@ -222,7 +223,7 @@ async function startLocalVideo() {
         
         // Create local canvas dynamically if it doesn't exist
         if (!canvases['localVideo']) {
-            canvases['localVideo'] = createVideoCanvas('localVideo', 'You');
+            canvases['localVideo'] = createVideoCanvas('localVideo', 'You', true);
         }
         
         const localCanvas = canvases['localVideo'].canvas;
