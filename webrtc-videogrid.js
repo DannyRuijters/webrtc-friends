@@ -91,20 +91,22 @@ function rebalanceVideoGrid() {
     
     // Calculate size (square canvases with minimum 200px)
     const maxWidth = Math.floor((availableWidth - totalGaps) / numCanvases);
-    const size = Math.max(200, Math.min(maxWidth, availableHeight));
+    const maxHeight = availableHeight;
     
     // Apply size to all canvases
     Object.values(canvases).forEach(({ container, canvas }) => {
-        container.style.flex = `0 0 ${size}px`;
-        container.style.width = `${size}px`;
-        canvas.style.width = `${size}px`;
-        canvas.style.height = `${size}px`;
+        container.style.flex = `0 0 ${maxWidth}px`;
+        container.style.width = `${maxWidth}px`;
+        canvas.style.width = `${maxWidth}px`;
+        canvas.style.height = `${maxHeight}px`;
         
         // Update drawing buffer
         const dpr = window.devicePixelRatio || 1;
-        const bufferSize = size * dpr;
-        if (canvas.width !== bufferSize || canvas.height !== bufferSize) {
-            canvas.width = canvas.height = bufferSize;
+        const bufferWidth = maxWidth * dpr;
+        const bufferHeight = maxHeight * dpr;
+        if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+            canvas.width = bufferWidth;
+            canvas.height = bufferHeight;
             if (canvas.gl?.myTexture) {
                 linearFilter(canvas.gl, canvas.gl.myTexture, canvas.width, canvas.height, canvas.mirror);
             }
