@@ -12,10 +12,10 @@ function setupWebGLContextHandlers(canvas, canvasId) {
     
     canvas.addEventListener('webglcontextrestored', () => {
         console.log(`WebGL context restored for ${canvasId}`);
-        canvas.contextLost = false;
         
         try {
-            initGL(canvas);
+            initCanvasGL(canvas);
+            canvas.contextLost = false;
             if (!canvas.videoElement?.srcObject) return;
             
             const videoElement = canvas.videoElement;
