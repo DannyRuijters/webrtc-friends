@@ -15,7 +15,7 @@ function setupWebGLContextHandlers(canvas, canvasId) {
         canvas.contextLost = false;
         
         try {
-            initCanvasGL(canvas);
+            initGL(canvas);
             if (!canvas.videoElement?.srcObject) return;
             
             const videoElement = canvas.videoElement;
