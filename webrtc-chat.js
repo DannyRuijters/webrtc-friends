@@ -138,4 +138,20 @@ function initChatResize() {
     
     document.addEventListener('touchend', stopResize);
     document.addEventListener('touchcancel', stopResize);
+    
+    // Reset chat container size when switching out of wide screen layout
+    const mediaQuery = window.matchMedia('(min-aspect-ratio: 1/1)');
+    function handleLayoutChange(e) {
+        if (!e.matches) {
+            // Not in wide screen mode - remove inline resize styles
+            chatContainer.style.flex = '';
+            chatContainer.style.minWidth = '';
+            chatContainer.style.maxWidth = '';
+            chatContainer.style.width = '';
+        }
+    }
+    
+    mediaQuery.addEventListener('change', handleLayoutChange);
+    // Check initial state
+    handleLayoutChange(mediaQuery);
 }
