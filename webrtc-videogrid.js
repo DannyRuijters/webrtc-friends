@@ -90,16 +90,15 @@ function rebalanceVideoGrid() {
 
     const numRows = Math.floor(Math.sqrt(numCanvases * availableHeight / availableWidth) + 0.65);
     const canvasesPerRow = Math.ceil(numCanvases / numRows);
-    const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow);
+    // Subtract 1px buffer to prevent rounding issues in Chrome
+    const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow) - 1;
     const maxHeight = Math.floor((availableHeight - (numRows-1) * gapSize) / numRows);
 
     // Apply size to all canvases
     Object.values(canvases).forEach(({ container, canvas }) => {
         container.style.flex = `0 0 ${maxWidth}px`;
-        container.style.width = `${maxWidth}px`;
-        container.style.maxWidth = `${maxWidth}px`;
-        canvas.style.width = `${maxWidth}px`;
-        canvas.style.maxWidth = `${maxWidth}px`;
+        container.style.width = container.style.maxWidth = container.style.minWidth = `${maxWidth}px`;
+        canvas.style.width = canvas.style.maxWidth = `${maxWidth}px`;
         canvas.style.height = `${maxHeight}px`;
         
         // Update drawing buffer
