@@ -331,13 +331,20 @@ async function handleOffer(offer, senderId, peerName) {
 
 function updateConnectionButton(connected) {
     const btn = document.getElementById('connectionBtn');
+    const userNameInput = document.getElementById('userName');
+    const roomIdInput = document.getElementById('roomId');
+    
     if (connected) {
         btn.textContent = 'Disconnect';
         btn.classList.add('disconnect');
         btn.disabled = false;
+        userNameInput.disabled = true;
+        roomIdInput.disabled = true;
     } else {
         btn.textContent = 'Connect';
         btn.classList.remove('disconnect');
+        userNameInput.disabled = false;
+        roomIdInput.disabled = false;
         validateConnectionButton();
     }
 }
