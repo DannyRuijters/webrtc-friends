@@ -85,7 +85,7 @@ function rebalanceVideoGrid() {
     
     // Calculate available space accounting for gaps
     const gapSize = 10;
-    const availableWidth = (rect.width - 1) || (window.innerWidth - 40);
+    const availableWidth = rect.width || (window.innerWidth - 40);
     const availableHeight = rect.height || (window.innerHeight - 200);
 
     const numRows = Math.floor(Math.sqrt(numCanvases * availableHeight / availableWidth) + 0.65);
@@ -97,7 +97,9 @@ function rebalanceVideoGrid() {
     Object.values(canvases).forEach(({ container, canvas }) => {
         container.style.flex = `0 0 ${maxWidth}px`;
         container.style.width = `${maxWidth}px`;
+        container.style.maxWidth = `${maxWidth}px`;
         canvas.style.width = `${maxWidth}px`;
+        canvas.style.maxWidth = `${maxWidth}px`;
         canvas.style.height = `${maxHeight}px`;
         
         // Update drawing buffer
