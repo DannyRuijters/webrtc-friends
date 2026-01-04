@@ -36,6 +36,7 @@ button:hover { background: #4a53a7; }
 button:disabled { background: #cccccc; cursor: not-allowed; }
 #connectionBtn { background: #4CAF50; }
 #connectionBtn:hover { background: #45a049; }
+#connectionBtn:disabled { background: #cccccc; cursor: not-allowed; }
 #connectionBtn.disconnect { background: #f44336; }
 #connectionBtn.disconnect:hover { background: #da190b; }
 input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
@@ -88,6 +89,7 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
     
     input[type="text"], .chat-input-group input, .overlay-row select { background: #1f1f1f; border-color: #444; color: #e0e0e0; }
     input[type="text"]:disabled { background: #2a2a2a; color: #666; }
+    button:disabled, #connectionBtn:disabled { background: #3a3a3a; color: #666; }
     
     .overlay { background-color: rgba(0,0,0,0.7); }
     .overlay-content { background-color: #2d2d2d; border-color: #444; color: #e0e0e0; }
