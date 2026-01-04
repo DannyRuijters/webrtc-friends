@@ -3,7 +3,7 @@ body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
 .content-wrapper { display: flex; flex-direction: column; gap: 10px; }
 .video-section { flex: 1; min-width: 0; }
 .video-grid { display: flex; flex-direction: row; gap: 10px; margin-bottom: 0; flex-wrap: wrap; 
-    overflow-x: auto; width: 100%; height: 100vh; align-content: flex-start;
+    overflow-x: hidden; width: 100%; height: 100vh; align-content: flex-start;
 }
 
 /* Wide screen layout - chat on the right */
@@ -22,7 +22,7 @@ body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
     background: rgba(0, 0, 0, 0.5); padding: 8px 12px; border-radius: 4px;
     font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
-canvas { border-radius: 8px; display: block; object-fit: cover; width: 100%; height: 100%; margin: 0; box-sizing: border-box; }
+canvas { border-radius: 8px; display: block; object-fit: cover; width: 100%; height: 100%; margin: 0; box-sizing: border-box; flex-shrink: 0; }
 .controls { background: white; padding: 4px 10px 4px; border-radius: 8px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px; 
 }
