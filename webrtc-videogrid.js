@@ -87,28 +87,12 @@ function rebalanceVideoGrid() {
     const gapSize = 10;
     const availableWidth = rect.width || (window.innerWidth - 40);
     const availableHeight = rect.height || (window.innerHeight - 200);
-    
-    let canvasesPerRow, numRows, maxWidth, maxHeight;
-    
-    if (numCanvases > 2) {
-        // Two rows layout
-        numRows = 2;
-        canvasesPerRow = Math.ceil(numCanvases / 2);
-        const horizontalGaps = Math.max(0, (canvasesPerRow - 1) * gapSize);
-        const verticalGap = gapSize;
-        
-        maxWidth = Math.floor((availableWidth - horizontalGaps) / canvasesPerRow);
-        maxHeight = Math.floor((availableHeight - verticalGap) / numRows);
-    } else {
-        // Single row layout
-        numRows = 1;
-        canvasesPerRow = numCanvases;
-        const totalGaps = Math.max(0, (numCanvases - 1) * gapSize);
-        
-        maxWidth = Math.floor((availableWidth - totalGaps) / numCanvases);
-        maxHeight = availableHeight;
-    }
-    
+
+    const numRows = Math.floor(Math.sqrt(numCanvases) + 0.5);
+    const canvasesPerRow = Math.ceil(numCanvases / numRows);
+    const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow);
+    const maxHeight = Math.floor((availableHeight - (numRows-1) * gapSize) / numRows);
+
     // Apply size to all canvases
     Object.values(canvases).forEach(({ container, canvas }) => {
         container.style.flex = `0 0 ${maxWidth}px`;
