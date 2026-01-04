@@ -1,3 +1,4 @@
+html { overflow-x: hidden; }
 body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; overflow-x: hidden; }
 .container { max-width: 100%; margin: 0 auto; overflow-x: hidden; }
 .content-wrapper { display: flex; flex-direction: column; gap: 10px; overflow-x: hidden; }
