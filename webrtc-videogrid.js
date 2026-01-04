@@ -85,7 +85,7 @@ function rebalanceVideoGrid() {
     
     // Calculate available space accounting for gaps
     const gapSize = 10;
-    const availableWidth = rect.width || (window.innerWidth - 40);
+    const availableWidth = (rect.width - 1) || (window.innerWidth - 40);
     const availableHeight = rect.height || (window.innerHeight - 200);
 
     const numRows = Math.floor(Math.sqrt(numCanvases * availableHeight / availableWidth) + 0.65);
