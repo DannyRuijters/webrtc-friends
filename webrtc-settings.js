@@ -162,8 +162,4 @@ window.addEventListener('click', (event) => {
     if (event.target === overlay) {
         closeOverlay();
     }
-    const shareOverlay = document.getElementById('shareOverlay');
-    if (event.target === shareOverlay) {
-        closeShareOverlay();
-    }
 });

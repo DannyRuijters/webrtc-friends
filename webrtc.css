@@ -42,6 +42,8 @@ button:disabled { background: #cccccc; cursor: not-allowed; }
 #connectionBtn:disabled { background: #cccccc; cursor: not-allowed; }
 #connectionBtn.disconnect { background: #f44336; }
 #connectionBtn.disconnect:hover { background: #da190b; }
+#shareBtn.sharing { background: #f44336; }
+#shareBtn.sharing:hover { background: #da190b; }
 input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .chat-container { background: white; padding: 10px 20px 20px; border-radius: 8px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 0; margin-bottom: 0; position: relative; 
@@ -69,24 +71,11 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
 .overlay-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; 
     border-radius: 8px; width: 80%; max-width: 600px; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.2); 
 }
-.overlay-content-wide { max-width: 800px; }
 .overlay-close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px; }
 .overlay-close:hover, .overlay-close:focus { color: #000; text-decoration: none; }
 .overlay-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
 .overlay-row label { min-width: 120px; font-weight: bold; }
 .overlay-row select { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-
-/* Screen share preview styles */
-.screen-preview-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin: 20px 0; }
-.screen-select-button { display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 200px; height: 150px; border: 2px dashed #5d81cf; border-radius: 8px; background: #f5f7fa;
-    cursor: pointer; transition: all 0.3s; font-size: 14px; color: #5d81cf;
-}
-.screen-select-button:hover { background: #e8f0fe; border-color: #4a53a7; }
-.screen-select-button .screen-icon { font-size: 48px; margin-bottom: 10px; }
-.screen-stop-button { border-color: #f44336; color: #f44336; background: #fff5f5; }
-.screen-stop-button:hover { background: #ffe5e5; border-color: #da190b; }
-.screen-share-status { text-align: center; color: #666; font-style: italic; margin-top: 10px; }
 
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
@@ -111,12 +100,6 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
     .overlay-content { background-color: #2d2d2d; border-color: #444; color: #e0e0e0; }
     .overlay-close { color: #aaa; }
     .overlay-close:hover, .overlay-close:focus { color: #fff; }
-    
-    .screen-select-button { background: #1f1f1f; border-color: #5d81cf; color: #7a9fd4; }
-    .screen-select-button:hover { background: #2a3a4a; }
-    .screen-stop-button { background: #2a1f1f; border-color: #f44336; color: #ff6659; }
-    .screen-stop-button:hover { background: #3a2525; }
-    .screen-share-status { color: #aaa; }
     
     .video-box { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 }
