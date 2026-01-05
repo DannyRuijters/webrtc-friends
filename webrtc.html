@@ -56,9 +56,14 @@
         
         <!-- Share Overlay Window -->
         <div id="shareOverlay" class="overlay">
-            <div class="overlay-content">
+            <div class="overlay-content overlay-content-wide">
                 <span class="overlay-close" onclick="closeShareOverlay()">&times;</span>
                 <h2>Share Screen</h2>
+                <p>Click on a screen or window to share it:</p>
+                <div id="screenPreviewGrid" class="screen-preview-grid">
+                    <!-- Screen previews will be added dynamically -->
+                </div>
+                <div id="screenShareStatus" class="screen-share-status"></div>
             </div>
         </div>
         
