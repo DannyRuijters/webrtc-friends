@@ -31,6 +31,7 @@
                     <input type="text" id="roomId" placeholder="Enter room ID (e.g., meeting123)" title="All participants need to fill in the same Room identifier" />
                 </div>
                 <button id="connectionBtn" onclick="toggleConnection()">Connect</button>
+                <button id="shareBtn" onclick="openShareOverlay()">Share</button>
                 <button id="overlayBtn" onclick="openOverlay()">&#9881;</button>
             </div>
         </div>
@@ -48,6 +49,14 @@
                     <label for="videoSource">Video source:</label>
                     <select id="videoSource" onchange="handleVideoSourceChange()"></select>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Share Overlay Window -->
+        <div id="shareOverlay" class="overlay">
+            <div class="overlay-content">
+                <span class="overlay-close" onclick="closeShareOverlay()">&times;</span>
+                <h2>Share Screen</h2>
             </div>
         </div>
         
