@@ -100,17 +100,20 @@ function rebalanceVideoGrid() {
         canvas.style.width = canvas.style.maxWidth = `${maxWidth}px`;
         canvas.style.height = `${maxHeight}px`;
         
-        // Update drawing buffer
-        const dpr = window.devicePixelRatio || 1;
-        const bufferWidth = maxWidth * dpr;
-        const bufferHeight = maxHeight * dpr;
-        if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
-            canvas.width = bufferWidth;
-            canvas.height = bufferHeight;
-            if (canvas.gl?.myTexture) {
-                linearFilter(canvas.gl, canvas.gl.myTexture, canvas.width, canvas.height, canvas.mirror);
+        // Update drawing buffer based on actual rendered size
+        requestAnimationFrame(() => {
+            const canvasRect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const bufferWidth = Math.round(canvasRect.width * dpr);
+            const bufferHeight = Math.round(canvasRect.height * dpr);
+            if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+                canvas.width = bufferWidth;
+                canvas.height = bufferHeight;
+                if (canvas.gl?.myTexture) {
+                    linearFilter(canvas.gl, canvas.gl.myTexture, canvas.width, canvas.height, canvas.mirror);
+                }
             }
-        }
+        });
     });
 }
 
