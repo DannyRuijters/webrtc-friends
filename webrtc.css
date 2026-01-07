@@ -9,9 +9,10 @@ body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; overfl
 
 /* Wide screen layout - chat on the right */
 @media (min-aspect-ratio: 1/1) {
-    html { overflow: hidden; }
-    body { overflow: hidden; }
-    .content-wrapper { flex-direction: row; height: calc(100vh - 150px); }
+    html { overflow: hidden; height: 100%; }
+    body { overflow: hidden; height: 100%; margin: 10px; box-sizing: border-box; }
+    .container { height: 100%; display: flex; flex-direction: column; }
+    .content-wrapper { flex-direction: row; flex: 1; min-height: 0; }
     .chat-container { flex: 0 0 350px; margin-bottom: 0; height: 100%; display: flex; flex-direction: column; }
     .chat-messages { flex: 1; height: auto; }
     .video-grid { margin-bottom: 0; height: 100%; }
