@@ -251,10 +251,18 @@ async function createPeerConnection(peerId, peerName) {
                 canvases[canvasId].streamId = streamId;
             }
             
-            // Handle screen share track ending
+            // Handle screen share track ending (when track.stop() is called)
             event.track.onended = () => {
                 console.log(`Screen share track from peer ${peerId} ended`);
                 if (canvases[canvasId]) {
+                    removeVideoCanvas(canvasId);
+                }
+            };
+            
+            // Handle track removal via renegotiation (removetrack event on stream)
+            stream.onremovetrack = (e) => {
+                console.log(`Track removed from screen share stream of peer ${peerId}`);
+                if (stream.getTracks().length === 0 && canvases[canvasId]) {
                     removeVideoCanvas(canvasId);
                 }
             };
@@ -351,7 +359,13 @@ async function handleOffer(offer, senderId, peerName) {
             await startLocalVideo();
         }
         
-        const pc = await createPeerConnection(senderId, peerName);
+        // Check if we already have a connection with this peer (renegotiation)
+        let pc = peerConnections[senderId];
+        if (!pc || pc.connectionState === 'closed') {
+            // Create new peer connection only if one doesn't exist
+            pc = await createPeerConnection(senderId, peerName);
+        }
+        
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         
         const answer = await pc.createAnswer();

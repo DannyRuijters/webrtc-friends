@@ -57,9 +57,9 @@ async function startScreenShare() {
     }
 }
 
-function stopScreenShare() {
+async function stopScreenShare() {
     // Remove screen share tracks from all peer connections
-    removeScreenShareFromPeers();
+    await removeScreenShareFromPeers();
     
     if (screenShareStream) {
         screenShareStream.getTracks().forEach(track => track.stop());
@@ -112,8 +112,8 @@ async function addScreenShareToPeers() {
     }
 }
 
-function removeScreenShareFromPeers() {
-    // Remove screen share tracks from all peer connections
+async function removeScreenShareFromPeers() {
+    // Remove screen share tracks from all peer connections and renegotiate
     for (const peerId of Object.keys(screenShareSenders)) {
         const sender = screenShareSenders[peerId];
         const pc = peerConnections[peerId];
@@ -121,6 +121,19 @@ function removeScreenShareFromPeers() {
         if (pc && sender && pc.connectionState !== 'closed') {
             try {
                 pc.removeTrack(sender);
+                
+                // Renegotiate the connection to inform the remote peer
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                
+                sendSignalingMessage({
+                    type: 'offer',
+                    offer: offer,
+                    targetId: peerId,
+                    peerName: myName,
+                    roomId: roomId
+                });
+                
                 console.log(`Removed screen share track from peer ${peerId}`);
             } catch (error) {
                 console.error(`Error removing screen share from peer ${peerId}:`, error);
