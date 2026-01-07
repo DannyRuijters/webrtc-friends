@@ -248,6 +248,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.broadcast(message, exclude_client_id=client_id, room_id=room_id)
                 logger.info(f"  → Chat message from '{sender_name}' broadcasted to room '{room_id}'")
                     
+            elif message_type == "screen-share-stopped":
+                # Forward screen share stopped message to target peer
+                target_id = data.get("targetId")
+                if target_id and manager.client_rooms.get(target_id) == room_id:
+                    if target_id in manager.active_connections:
+                        message = {**data, "senderId": client_id}
+                        await manager.send_personal_message(message, target_id)
+                        logger.info(f"  → Screen share stopped forwarded to client {target_id}")
+                    
             elif message_type == "get-peers":
                 # Send list of available peers in same room
                 peer_list = [cid for cid in manager.get_peers_in_room(room_id) if cid != client_id]
