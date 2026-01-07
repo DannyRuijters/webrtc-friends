@@ -97,6 +97,7 @@ function initTextureCoordBuffer(gl) {
 }
 
 function initCanvasGL(canvas) {
+    console.log("Initializing WebGL context for canvas:", canvas.id);
     const devicePixelRatio = window.devicePixelRatio || 1;
     // set the size of the drawingBuffer based on the size it's displayed.
     canvas.width = canvas.clientWidth * devicePixelRatio;
