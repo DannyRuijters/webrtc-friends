@@ -259,7 +259,6 @@ async function createPeerConnection(peerId, peerName) {
             };
             
             event.track.onended = cleanupScreenShare;
-            event.track.onmute = cleanupScreenShare;
             stream.onremovetrack = () => {
                 if (stream.getTracks().length === 0) cleanupScreenShare();
             };
