@@ -74,7 +74,7 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
     body { overflow: hidden; height: 100%; box-sizing: border-box; }
     .container { height: 100%; display: flex; flex-direction: column; }
     .content-wrapper { flex-direction: row; flex: 1; min-height: 0; }
-    .video-section { height: 100%; }
+    .video-section { flex: 1; height: 100%; min-height: 0; }
     .chat-container { flex: 0 0 350px; margin-bottom: 0; height: 100%; display: flex; flex-direction: column; }
     .chat-messages { flex: 1; height: auto; }
     .video-grid { margin-bottom: 0; height: 100%; align-content: stretch; }

@@ -80,11 +80,10 @@ function rebalanceVideoGrid() {
     const numCanvases = Object.keys(canvases).length;
     if (numCanvases === 0) return;
     
-    // Defer measurement until after layout is complete
+    // Defer measurement until after layout reflow
     requestAnimationFrame(() => {
         const videoGrid = document.getElementById('videoGrid');
-        const videoSection = videoGrid.parentElement;
-        const rect = videoSection.getBoundingClientRect();
+        const rect = videoGrid.getBoundingClientRect();
         
         // Calculate available space accounting for gaps
         const gapSize = 10;
@@ -103,18 +102,23 @@ function rebalanceVideoGrid() {
             container.style.height = container.style.maxHeight = `${maxHeight}px`;
             canvas.style.width = canvas.style.maxWidth = `${maxWidth}px`;
             canvas.style.height = `${maxHeight}px`;
-            
-            const canvasRect = canvas.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            const bufferWidth = Math.round(canvasRect.width * dpr);
-            const bufferHeight = Math.round(canvasRect.height * dpr);
-            if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
-                canvas.width = bufferWidth;
-                canvas.height = bufferHeight;
-                if (canvas.gl?.myTexture) {
-                    linearFilter(canvas.gl, canvas.gl.myTexture, canvas.width, canvas.height, canvas.mirror);
+        });
+        
+        // Update drawing buffer after sizes are applied
+        requestAnimationFrame(() => {
+            Object.values(canvases).forEach(({ canvas }) => {
+                const canvasRect = canvas.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                const bufferWidth = Math.round(canvasRect.width * dpr);
+                const bufferHeight = Math.round(canvasRect.height * dpr);
+                if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+                    canvas.width = bufferWidth;
+                    canvas.height = bufferHeight;
+                    if (canvas.gl?.myTexture) {
+                        linearFilter(canvas.gl, canvas.gl.myTexture, canvas.width, canvas.height, canvas.mirror);
+                    }
                 }
-            }
+            });
         });
     });
 }
