@@ -229,22 +229,34 @@ async function createPeerConnection(peerId, peerName) {
     
     // Handle incoming tracks
     pc.ontrack = (event) => {
-        console.log(`Received remote track from peer ${peerId}:`, event.track.kind, 'stream:', event.streams[0]?.id);
-        
         const stream = event.streams[0];
-        if (!stream) return;
+        console.log(`Received remote track from peer ${peerId}:`, event.track.kind, 'stream:', stream?.id);
+        
+        if (!stream) {
+            console.warn(`No stream in track event from peer ${peerId}`);
+            return;
+        }
         
         // Check if this is an additional stream (screen share) vs the main camera stream
         // We track streams by their ID to create separate canvases for each
         const streamId = stream.id;
+        const existingCanvas = canvases[`remote-${peerId}`];
+        const existingStreamId = existingCanvas?.streamId;
+        
+        console.log(`Track event: existingCanvas=${!!existingCanvas}, existingStreamId=${existingStreamId}, newStreamId=${streamId}`);
+        
         const isScreenShare = event.track.kind === 'video' && 
-            canvases[`remote-${peerId}`] && 
-            canvases[`remote-${peerId}`].streamId !== streamId;
+            existingCanvas && 
+            existingStreamId && 
+            existingStreamId !== streamId;
+        
+        console.log(`isScreenShare=${isScreenShare}`);
         
         let canvasId;
         if (isScreenShare) {
             // This is a screen share stream - create a separate canvas
             canvasId = `remote-${peerId}-screen`;
+            console.log(`Creating screen share canvas: ${canvasId}`);
             
             if (!canvases[canvasId]) {
                 canvases[canvasId] = createVideoCanvas(canvasId, `${peerName || `Peer ${peerId}`} (Screen)`);
@@ -338,9 +350,10 @@ async function handleAnswer(answer, peerId) {
             return;
         }
         
+        console.log(`Setting remote description for answer from peer ${peerId}, signaling state: ${pc.signalingState}`);
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         const peerName = remotePeers[peerId]?.name || `Peer ${peerId}`;
-        console.log(`Connection established with "${peerName}"`);
+        console.log(`Connection/renegotiation completed with "${peerName}"`);
         
         // Update remote peer info if canvas exists
         const remotePeerInfo = document.getElementById(`remote-${peerId}PeerInfo`);
@@ -361,9 +374,20 @@ async function handleOffer(offer, senderId, peerName) {
         
         // Check if we already have a connection with this peer (renegotiation)
         let pc = peerConnections[senderId];
-        if (!pc || pc.connectionState === 'closed') {
+        const isRenegotiation = pc && pc.connectionState !== 'closed';
+        
+        if (!isRenegotiation) {
             // Create new peer connection only if one doesn't exist
             pc = await createPeerConnection(senderId, peerName);
+        } else {
+            // Handle renegotiation - check signaling state
+            console.log(`Renegotiation offer from peer ${senderId}, signaling state: ${pc.signalingState}`);
+            
+            // If we have a local offer pending, we need to rollback first (glare handling)
+            if (pc.signalingState === 'have-local-offer') {
+                console.log(`Rolling back local offer for peer ${senderId} due to incoming offer`);
+                await pc.setLocalDescription({ type: 'rollback' });
+            }
         }
         
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -379,7 +403,7 @@ async function handleOffer(offer, senderId, peerName) {
             roomId: roomId
         });
         
-        console.log(`Answered call from "${peerName}"`);
+        console.log(`Answered ${isRenegotiation ? 'renegotiation ' : ''}call from "${peerName}"`);
         
         // Update remote peer info if canvas exists
         const remotePeerInfo = document.getElementById(`remote-${senderId}PeerInfo`);
