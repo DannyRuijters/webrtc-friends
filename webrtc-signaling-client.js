@@ -89,6 +89,9 @@ function disconnectFromServer() {
     });
     peerConnections = {};
     
+    // Clean up screen share senders
+    screenShareSenders = {};
+    
     // Remove all remote canvases
     Object.keys(canvases).forEach(canvasId => {
         if (canvasId.startsWith('remote-')) {
@@ -144,13 +147,19 @@ async function handleSignalingMessage(message) {
             if (remotePeers[disconnectedPeerId]) {
                 const peerName = remotePeers[disconnectedPeerId].name;
                 
-                // Remove remote canvas for this peer
+                // Remove remote canvas for this peer (both camera and screen share)
                 removeVideoCanvas(`remote-${disconnectedPeerId}`);
+                removeVideoCanvas(`remote-${disconnectedPeerId}-screen`);
                 
                 // Close peer connection
                 if (peerConnections[disconnectedPeerId]) {
                     peerConnections[disconnectedPeerId].close();
                     delete peerConnections[disconnectedPeerId];
+                }
+                
+                // Clean up screen share sender reference
+                if (screenShareSenders[disconnectedPeerId]) {
+                    delete screenShareSenders[disconnectedPeerId];
                 }
                 
                 // Remove from tracking
@@ -210,19 +219,58 @@ async function createPeerConnection(peerId, peerName) {
         });
     }
     
+    // Add screen share stream tracks if screen sharing is active
+    if (screenShareStream) {
+        screenShareStream.getTracks().forEach(track => {
+            const sender = pc.addTrack(track, screenShareStream);
+            screenShareSenders[peerId] = sender;
+        });
+    }
+    
     // Handle incoming tracks
     pc.ontrack = (event) => {
-        console.log(`Received remote track from peer ${peerId}:`, event.track.kind);
+        console.log(`Received remote track from peer ${peerId}:`, event.track.kind, 'stream:', event.streams[0]?.id);
         
-        const canvasId = `remote-${peerId}`;
-        // Create remote canvas dynamically if it doesn't exist
-        if (!canvases[canvasId]) {
-            canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`);
+        const stream = event.streams[0];
+        if (!stream) return;
+        
+        // Check if this is an additional stream (screen share) vs the main camera stream
+        // We track streams by their ID to create separate canvases for each
+        const streamId = stream.id;
+        const isScreenShare = event.track.kind === 'video' && 
+            canvases[`remote-${peerId}`] && 
+            canvases[`remote-${peerId}`].streamId !== streamId;
+        
+        let canvasId;
+        if (isScreenShare) {
+            // This is a screen share stream - create a separate canvas
+            canvasId = `remote-${peerId}-screen`;
+            
+            if (!canvases[canvasId]) {
+                canvases[canvasId] = createVideoCanvas(canvasId, `${peerName || `Peer ${peerId}`} (Screen)`);
+                canvases[canvasId].streamId = streamId;
+            }
+            
+            // Handle screen share track ending
+            event.track.onended = () => {
+                console.log(`Screen share track from peer ${peerId} ended`);
+                if (canvases[canvasId]) {
+                    removeVideoCanvas(canvasId);
+                }
+            };
+        } else {
+            // This is the main camera stream
+            canvasId = `remote-${peerId}`;
+            
+            if (!canvases[canvasId]) {
+                canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`);
+            }
+            canvases[canvasId].streamId = streamId;
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
         initCanvasGL(remoteCanvas);
-        initVideoTexture(remoteCanvas, event.streams[0], canvasId);
+        initVideoTexture(remoteCanvas, stream, canvasId);
     };
     
     // Handle ICE candidates

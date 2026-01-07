@@ -4,6 +4,7 @@
 
 let screenShareStream = null;
 let screenShareCanvasId = null;
+let screenShareSenders = {}; // Track RTCRtpSenders for screen share tracks by peer ID
 
 async function toggleScreenShare() {
     if (screenShareStream) {
@@ -44,6 +45,9 @@ async function startScreenShare() {
             stopScreenShare();
         });
         
+        // Add screen share tracks to all peer connections
+        await addScreenShareToPeers();
+        
         console.log('Screen sharing started');
         
     } catch (error) {
@@ -54,6 +58,9 @@ async function startScreenShare() {
 }
 
 function stopScreenShare() {
+    // Remove screen share tracks from all peer connections
+    removeScreenShareFromPeers();
+    
     if (screenShareStream) {
         screenShareStream.getTracks().forEach(track => track.stop());
         screenShareStream = null;
@@ -70,10 +77,82 @@ function stopScreenShare() {
     console.log('Screen sharing stopped');
 }
 
+async function addScreenShareToPeers() {
+    if (!screenShareStream) return;
+    
+    const videoTrack = screenShareStream.getVideoTracks()[0];
+    if (!videoTrack) return;
+    
+    // Add screen share track to all existing peer connections
+    for (const peerId of Object.keys(peerConnections)) {
+        const pc = peerConnections[peerId];
+        if (pc && pc.connectionState !== 'closed') {
+            try {
+                // Add the screen share track
+                const sender = pc.addTrack(videoTrack, screenShareStream);
+                screenShareSenders[peerId] = sender;
+                
+                // Renegotiate the connection
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                
+                sendSignalingMessage({
+                    type: 'offer',
+                    offer: offer,
+                    targetId: peerId,
+                    peerName: myName,
+                    roomId: roomId
+                });
+                
+                console.log(`Added screen share track to peer ${peerId}`);
+            } catch (error) {
+                console.error(`Error adding screen share to peer ${peerId}:`, error);
+            }
+        }
+    }
+}
+
+function removeScreenShareFromPeers() {
+    // Remove screen share tracks from all peer connections
+    for (const peerId of Object.keys(screenShareSenders)) {
+        const sender = screenShareSenders[peerId];
+        const pc = peerConnections[peerId];
+        
+        if (pc && sender && pc.connectionState !== 'closed') {
+            try {
+                pc.removeTrack(sender);
+                console.log(`Removed screen share track from peer ${peerId}`);
+            } catch (error) {
+                console.error(`Error removing screen share from peer ${peerId}:`, error);
+            }
+        }
+    }
+    screenShareSenders = {};
+}
+
+function isScreenShareSupported() {
+    return navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function';
+}
+
+function initShareButton() {
+    const btn = document.getElementById('shareBtn');
+    if (btn && !isScreenShareSupported()) {
+        btn.disabled = true;
+        console.log('Screen sharing not supported - Share button disabled');
+    }
+}
+
 function updateShareButton(isSharing) {
     const btn = document.getElementById('shareBtn');
     if (btn) {
         btn.textContent = isSharing ? 'Stop Share' : 'Share';
         btn.classList.toggle('sharing', isSharing);
     }
+}
+
+// Initialize share button state when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initShareButton);
+} else {
+    initShareButton();
 }
