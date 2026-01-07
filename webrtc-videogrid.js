@@ -80,28 +80,29 @@ function rebalanceVideoGrid() {
     const numCanvases = Object.keys(canvases).length;
     if (numCanvases === 0) return;
     
-    const videoGrid = document.getElementById('videoGrid');
-    const rect = videoGrid.getBoundingClientRect();
-    
-    // Calculate available space accounting for gaps
-    const gapSize = 10;
-    const availableWidth = rect.width || (window.innerWidth - 40);
-    const availableHeight = rect.height || (window.innerHeight - 200);
-
-    const numRows = Math.floor(Math.sqrt(numCanvases * availableHeight / availableWidth) + 0.65);
-    const canvasesPerRow = Math.ceil(numCanvases / numRows);
-    const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow);
-    const maxHeight = Math.floor((availableHeight - (numRows-1) * gapSize) / numRows);
-
-    // Apply size to all canvases
-    Object.values(canvases).forEach(({ container, canvas }) => {
-        container.style.flex = `0 0 ${maxWidth}px`;
-        container.style.width = container.style.maxWidth = container.style.minWidth = `${maxWidth}px`;
-        canvas.style.width = canvas.style.maxWidth = `${maxWidth}px`;
-        canvas.style.height = `${maxHeight}px`;
+    // Defer measurement until after layout is complete
+    requestAnimationFrame(() => {
+        const videoGrid = document.getElementById('videoGrid');
+        const rect = videoGrid.getBoundingClientRect();
         
-        // Update drawing buffer based on actual rendered size
-        requestAnimationFrame(() => {
+        // Calculate available space accounting for gaps
+        const gapSize = 10;
+        const availableWidth = rect.width || (window.innerWidth - 40);
+        const availableHeight = rect.height || (window.innerHeight - 200);
+
+        const numRows = Math.floor(Math.sqrt(numCanvases * availableHeight / availableWidth) + 0.65);
+        const canvasesPerRow = Math.ceil(numCanvases / numRows);
+        const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow);
+        const maxHeight = Math.floor((availableHeight - (numRows-1) * gapSize) / numRows);
+
+        // Apply size to all canvases
+        Object.values(canvases).forEach(({ container, canvas }) => {
+            container.style.flex = `0 0 ${maxWidth}px`;
+            container.style.width = container.style.maxWidth = container.style.minWidth = `${maxWidth}px`;
+            container.style.height = container.style.maxHeight = `${maxHeight}px`;
+            canvas.style.width = canvas.style.maxWidth = `${maxWidth}px`;
+            canvas.style.height = `${maxHeight}px`;
+            
             const canvasRect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             const bufferWidth = Math.round(canvasRect.width * dpr);
