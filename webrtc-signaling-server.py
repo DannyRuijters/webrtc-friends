@@ -188,7 +188,8 @@ async def websocket_endpoint(websocket: WebSocket):
         if message_type in ["offer", "answer", "ice-candidate"]:
             logger.info(f"Client {client_id} sent: {message_type}")
             target_id = first_data.get("targetId")
-            if target_id:
+            if target_id is not None:
+                target_id = int(target_id)
                 # Verify target is in same room
                 if manager.client_rooms.get(target_id) == room_id:
                     if target_id in manager.active_connections:
@@ -214,6 +215,10 @@ async def websocket_endpoint(websocket: WebSocket):
             # Handle different message types
             if message_type in ["offer", "answer", "ice-candidate"]:
                 target_id = data.get("targetId")
+                
+                # Ensure target_id is an integer for dictionary lookup
+                if target_id is not None:
+                    target_id = int(target_id)
                 
                 if target_id:
                     # Verify target is in same room
@@ -251,11 +256,13 @@ async def websocket_endpoint(websocket: WebSocket):
             elif message_type == "screen-share-stopped":
                 # Forward screen share stopped message to target peer
                 target_id = data.get("targetId")
-                if target_id and manager.client_rooms.get(target_id) == room_id:
-                    if target_id in manager.active_connections:
-                        message = {**data, "senderId": client_id}
-                        await manager.send_personal_message(message, target_id)
-                        logger.info(f"  → Screen share stopped forwarded to client {target_id}")
+                if target_id is not None:
+                    target_id = int(target_id)
+                    if manager.client_rooms.get(target_id) == room_id:
+                        if target_id in manager.active_connections:
+                            message = {**data, "senderId": client_id}
+                            await manager.send_personal_message(message, target_id)
+                            logger.info(f"  → Screen share stopped forwarded to client {target_id}")
                     
             elif message_type == "get-peers":
                 # Send list of available peers in same room
