@@ -77,27 +77,17 @@ function connectToSignalingServer() {
 }
 
 function disconnectFromServer() {
-    if (signalingSocket) {
-        signalingSocket.close();
-    }
+    if (signalingSocket) signalingSocket.close();
     
     // Close all peer connections
-    Object.keys(peerConnections).forEach(peerId => {
-        if (peerConnections[peerId]) {
-            peerConnections[peerId].close();
-        }
-    });
+    Object.values(peerConnections).forEach(pc => pc?.close());
     peerConnections = {};
-    
-    // Clean up screen share senders
     screenShareSenders = {};
     
     // Remove all remote canvases
-    Object.keys(canvases).forEach(canvasId => {
-        if (canvasId.startsWith('remote-')) {
-            removeVideoCanvas(canvasId);
-        }
-    });
+    Object.keys(canvases)
+        .filter(id => id.startsWith('remote-'))
+        .forEach(removeVideoCanvas);
     
     remotePeers = {};
     console.log('Disconnected from server');
@@ -145,51 +135,33 @@ async function handleSignalingMessage(message) {
             console.log(`Peer ${disconnectedPeerId} disconnected`);
             
             if (remotePeers[disconnectedPeerId]) {
-                const peerName = remotePeers[disconnectedPeerId].name;
-                
-                // Remove remote canvas for this peer (both camera and screen share)
+                // Remove remote canvases for this peer (camera and screen share)
                 removeVideoCanvas(`remote-${disconnectedPeerId}`);
                 removeVideoCanvas(`remote-${disconnectedPeerId}-screen`);
                 
-                // Close peer connection
-                if (peerConnections[disconnectedPeerId]) {
-                    peerConnections[disconnectedPeerId].close();
-                    delete peerConnections[disconnectedPeerId];
-                }
-                
-                // Clean up screen share sender reference
-                if (screenShareSenders[disconnectedPeerId]) {
-                    delete screenShareSenders[disconnectedPeerId];
-                }
-                
-                // Remove from tracking
+                // Close and clean up peer connection
+                peerConnections[disconnectedPeerId]?.close();
+                delete peerConnections[disconnectedPeerId];
+                delete screenShareSenders[disconnectedPeerId];
                 delete remotePeers[disconnectedPeerId];
             }
             break;
             
         case 'offer':
-            const senderIdOffer = message.senderId;
-            const peerNameOffer = message.peerName || `Peer-${senderIdOffer}`;
-            remotePeers[senderIdOffer] = { name: peerNameOffer };
-            console.log(`Received offer from "${peerNameOffer}" (Client ${senderIdOffer})`);
-            await handleOffer(message.offer, senderIdOffer, peerNameOffer);
+            const peerNameOffer = message.peerName || `Peer-${message.senderId}`;
+            remotePeers[message.senderId] = { name: peerNameOffer };
+            await handleOffer(message.offer, message.senderId, peerNameOffer);
             break;
             
         case 'answer':
-            const senderIdAnswer = message.senderId;
-            const peerNameAnswer = message.peerName || remotePeers[senderIdAnswer]?.name || `Peer-${senderIdAnswer}`;
-            if (message.peerName) {
-                remotePeers[senderIdAnswer] = { name: peerNameAnswer };
-            }
-            console.log(`Received answer from "${peerNameAnswer}" (Client ${senderIdAnswer})`);
-            await handleAnswer(message.answer, senderIdAnswer);
+            const peerNameAnswer = message.peerName || remotePeers[message.senderId]?.name || `Peer-${message.senderId}`;
+            if (message.peerName) remotePeers[message.senderId] = { name: peerNameAnswer };
+            await handleAnswer(message.answer, message.senderId);
             break;
             
         case 'ice-candidate':
-            const senderIdIce = message.senderId;
-            if (message.candidate && peerConnections[senderIdIce]) {
-                await peerConnections[senderIdIce].addIceCandidate(new RTCIceCandidate(message.candidate));
-                console.log(`Added ICE candidate from peer ${senderIdIce}`);
+            if (message.candidate && peerConnections[message.senderId]) {
+                await peerConnections[message.senderId].addIceCandidate(new RTCIceCandidate(message.candidate));
             }
             break;
             
@@ -199,16 +171,9 @@ async function handleSignalingMessage(message) {
             break;
             
         case 'screen-share-stopped':
-            const screenSharePeerId = message.senderId;
-            console.log(`Received screen-share-stopped from peer ${screenSharePeerId}`);
-            const screenCanvasId = `remote-${screenSharePeerId}-screen`;
-            console.log(`Looking for canvas: ${screenCanvasId}, exists: ${!!canvases[screenCanvasId]}`);
-            console.log(`Available canvases:`, Object.keys(canvases));
+            const screenCanvasId = `remote-${message.senderId}-screen`;
             if (canvases[screenCanvasId]) {
                 removeVideoCanvas(screenCanvasId);
-                console.log(`Removed screen share canvas for peer ${screenSharePeerId}`);
-            } else {
-                console.warn(`Screen share canvas ${screenCanvasId} not found`);
             }
             break;
     }
@@ -219,6 +184,29 @@ function sendSignalingMessage(message) {
         signalingSocket.send(JSON.stringify(message));
     } else {
         console.error('Cannot send message: WebSocket not connected');
+    }
+}
+
+// Helper function to send a renegotiation offer to a peer
+async function sendRenegotiationOffer(peerId) {
+    const pc = peerConnections[peerId];
+    if (!pc || pc.connectionState === 'closed') return false;
+    
+    try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        
+        sendSignalingMessage({
+            type: 'offer',
+            offer: offer,
+            targetId: peerId,
+            peerName: myName,
+            roomId: roomId
+        });
+        return true;
+    } catch (error) {
+        console.error(`Error sending renegotiation offer to peer ${peerId}:`, error);
+        return false;
     }
 }
 
@@ -244,61 +232,36 @@ async function createPeerConnection(peerId, peerName) {
     // Handle incoming tracks
     pc.ontrack = (event) => {
         const stream = event.streams[0];
-        console.log(`Received remote track from peer ${peerId}:`, event.track.kind, 'stream:', stream?.id);
-        
-        if (!stream) {
-            console.warn(`No stream in track event from peer ${peerId}`);
-            return;
-        }
+        if (!stream) return;
         
         // Check if this is an additional stream (screen share) vs the main camera stream
-        // We track streams by their ID to create separate canvases for each
         const streamId = stream.id;
         const existingCanvas = canvases[`remote-${peerId}`];
-        const existingStreamId = existingCanvas?.streamId;
-        
-        console.log(`Track event: existingCanvas=${!!existingCanvas}, existingStreamId=${existingStreamId}, newStreamId=${streamId}`);
-        
         const isScreenShare = event.track.kind === 'video' && 
-            existingCanvas && 
-            existingStreamId && 
-            existingStreamId !== streamId;
-        
-        console.log(`isScreenShare=${isScreenShare}`);
+            existingCanvas?.streamId && 
+            existingCanvas.streamId !== streamId;
         
         let canvasId;
         if (isScreenShare) {
             // This is a screen share stream - create a separate canvas
             canvasId = `remote-${peerId}-screen`;
-            console.log(`Creating screen share canvas: ${canvasId}`);
             
             if (!canvases[canvasId]) {
                 canvases[canvasId] = createVideoCanvas(canvasId, `${peerName || `Peer ${peerId}`} (Screen)`);
                 canvases[canvasId].streamId = streamId;
             }
             
-            // Handle screen share track ending (when track.stop() is called)
-            event.track.onended = () => {
-                console.log(`Screen share track from peer ${peerId} ended`);
+            // Cleanup function for when screen share ends
+            const cleanupScreenShare = () => {
                 if (canvases[canvasId]) {
                     removeVideoCanvas(canvasId);
                 }
             };
             
-            // Handle track mute (often fires when remote stops sharing)
-            event.track.onmute = () => {
-                console.log(`Screen share track from peer ${peerId} muted`);
-                if (canvases[canvasId]) {
-                    removeVideoCanvas(canvasId);
-                }
-            };
-            
-            // Handle track removal via renegotiation (removetrack event on stream)
-            stream.onremovetrack = (e) => {
-                console.log(`Track removed from screen share stream of peer ${peerId}`);
-                if (stream.getTracks().length === 0 && canvases[canvasId]) {
-                    removeVideoCanvas(canvasId);
-                }
+            event.track.onended = cleanupScreenShare;
+            event.track.onmute = cleanupScreenShare;
+            stream.onremovetrack = () => {
+                if (stream.getTracks().length === 0) cleanupScreenShare();
             };
         } else {
             // This is the main camera stream
@@ -336,10 +299,6 @@ async function createPeerConnection(peerId, peerName) {
         }
     };
     
-    pc.oniceconnectionstatechange = () => {
-        console.log(`ICE connection state with peer ${peerId}:`, pc.iceConnectionState);
-    };
-    
     return pc;
 }
 
@@ -365,23 +324,11 @@ async function createAndSendOffer(targetId, peerName) {
 }
 
 async function handleAnswer(answer, peerId) {
+    const pc = peerConnections[peerId];
+    if (!pc) return;
+    
     try {
-        const pc = peerConnections[peerId];
-        if (!pc) {
-            console.error(`No peer connection found for peer ${peerId}`);
-            return;
-        }
-        
-        console.log(`Setting remote description for answer from peer ${peerId}, signaling state: ${pc.signalingState}`);
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
-        const peerName = remotePeers[peerId]?.name || `Peer ${peerId}`;
-        console.log(`Connection/renegotiation completed with "${peerName}"`);
-        
-        // Update remote peer info if canvas exists
-        const remotePeerInfo = document.getElementById(`remote-${peerId}PeerInfo`);
-        if (remotePeerInfo) {
-            remotePeerInfo.textContent = `${peerName} (ID: ${peerId})`;
-        }
     } catch (error) {
         console.error("Error handling answer:", error);
     }
@@ -389,31 +336,20 @@ async function handleAnswer(answer, peerId) {
 
 async function handleOffer(offer, senderId, peerName) {
     try {
-        if (!localStream) {
-            console.log(`Received call from "${peerName}" but camera not started. Starting camera...`);
-            await startLocalVideo();
-        }
+        if (!localStream) await startLocalVideo();
         
         // Check if we already have a connection with this peer (renegotiation)
         let pc = peerConnections[senderId];
         const isRenegotiation = pc && pc.connectionState !== 'closed';
         
         if (!isRenegotiation) {
-            // Create new peer connection only if one doesn't exist
             pc = await createPeerConnection(senderId, peerName);
-        } else {
-            // Handle renegotiation - check signaling state
-            console.log(`Renegotiation offer from peer ${senderId}, signaling state: ${pc.signalingState}`);
-            
-            // If we have a local offer pending, we need to rollback first (glare handling)
-            if (pc.signalingState === 'have-local-offer') {
-                console.log(`Rolling back local offer for peer ${senderId} due to incoming offer`);
-                await pc.setLocalDescription({ type: 'rollback' });
-            }
+        } else if (pc.signalingState === 'have-local-offer') {
+            // Rollback local offer for glare handling
+            await pc.setLocalDescription({ type: 'rollback' });
         }
         
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         
@@ -424,14 +360,6 @@ async function handleOffer(offer, senderId, peerName) {
             peerName: myName,
             roomId: roomId
         });
-        
-        console.log(`Answered ${isRenegotiation ? 'renegotiation ' : ''}call from "${peerName}"`);
-        
-        // Update remote peer info if canvas exists
-        const remotePeerInfo = document.getElementById(`remote-${senderId}PeerInfo`);
-        if (remotePeerInfo) {
-            remotePeerInfo.textContent = `${peerName} (ID: ${senderId})`;
-        }
     } catch (error) {
         console.error("Error handling offer:", error);
     }

@@ -149,25 +149,7 @@ function addMouseEvents(element) {
     else element.attachEvent("onmousewheel", handleMouseWheel);
 }
 
-function windowResize() {
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const canvasArray = document.getElementsByClassName("video-canvas");
-    for (let index = 0; index < canvasArray.length; ++index) {
-        const canvas = canvasArray[index];
-        // set the size of the drawingBuffer based on the size it's displayed.
-        const width = canvas.clientWidth * devicePixelRatio;
-        const height = canvas.clientHeight * devicePixelRatio;
-        if (width != canvas.width || height != canvas.height) {
-            canvas.width = width;
-            canvas.height = height;
-            const gl = canvas.gl;
-            linearFilter(gl, gl.myTexture, canvas.width, canvas.height, canvas.mirror);
-        }
-    }
-}
-
 function addEventHandlers() {
     document.onmouseup = handleMouseUp;
     document.onmousemove = handleMouseMove;
-    window.addEventListener('resize', windowResize, true);
 }

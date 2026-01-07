@@ -88,22 +88,9 @@ async function addScreenShareToPeers() {
         const pc = peerConnections[peerId];
         if (pc && pc.connectionState !== 'closed') {
             try {
-                // Add the screen share track
                 const sender = pc.addTrack(videoTrack, screenShareStream);
                 screenShareSenders[peerId] = sender;
-                
-                // Renegotiate the connection
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                
-                sendSignalingMessage({
-                    type: 'offer',
-                    offer: offer,
-                    targetId: peerId,
-                    peerName: myName,
-                    roomId: roomId
-                });
-                
+                await sendRenegotiationOffer(peerId);
                 console.log(`Added screen share track to peer ${peerId}`);
             } catch (error) {
                 console.error(`Error adding screen share to peer ${peerId}:`, error);
@@ -121,18 +108,7 @@ async function removeScreenShareFromPeers() {
         if (pc && sender && pc.connectionState !== 'closed') {
             try {
                 pc.removeTrack(sender);
-                
-                // Renegotiate the connection to inform the remote peer
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                
-                sendSignalingMessage({
-                    type: 'offer',
-                    offer: offer,
-                    targetId: peerId,
-                    peerName: myName,
-                    roomId: roomId
-                });
+                await sendRenegotiationOffer(peerId);
                 
                 // Also send explicit screen-share-stopped message for reliability
                 sendSignalingMessage({

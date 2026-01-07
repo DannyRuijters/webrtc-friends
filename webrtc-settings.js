@@ -70,6 +70,25 @@ async function populateMediaDevices() {
     }
 }
 
+// Helper function to replace a track in localStream and all peer connections
+async function replaceTrackInConnections(kind, newTrack) {
+    const oldTrack = localStream.getTracks().find(t => t.kind === kind);
+    
+    if (oldTrack) {
+        localStream.removeTrack(oldTrack);
+        oldTrack.stop();
+    }
+    localStream.addTrack(newTrack);
+    
+    // Update all peer connections with new track
+    Object.values(peerConnections).forEach(pc => {
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === kind);
+        if (sender) {
+            sender.replaceTrack(newTrack);
+        }
+    });
+}
+
 // Handle audio source change
 async function handleAudioSourceChange() {
     const audioSelect = document.getElementById('audioSource');
@@ -78,29 +97,11 @@ async function handleAudioSourceChange() {
     
     if (localStream) {
         try {
-            // Get new audio stream with selected device
             const newAudioStream = await navigator.mediaDevices.getUserMedia({
                 audio: { deviceId: { exact: selectedDeviceId } }
             });
             
-            const newAudioTrack = newAudioStream.getAudioTracks()[0];
-            const oldAudioTrack = localStream.getAudioTracks()[0];
-            
-            // Replace audio track in local stream
-            if (oldAudioTrack) {
-                localStream.removeTrack(oldAudioTrack);
-                oldAudioTrack.stop();
-            }
-            localStream.addTrack(newAudioTrack);
-            
-            // Update all peer connections with new audio track
-            Object.values(peerConnections).forEach(pc => {
-                const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
-                if (sender) {
-                    sender.replaceTrack(newAudioTrack);
-                }
-            });
-            
+            await replaceTrackInConnections('audio', newAudioStream.getAudioTracks()[0]);
             console.log('Audio source switched successfully');
         } catch (error) {
             console.error('Error switching audio source:', error);
@@ -116,7 +117,6 @@ async function handleVideoSourceChange() {
     
     if (localStream) {
         try {
-            // Get new video stream with selected device
             const newVideoStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     deviceId: { exact: selectedDeviceId },
@@ -125,28 +125,11 @@ async function handleVideoSourceChange() {
                 }
             });
             
-            const newVideoTrack = newVideoStream.getVideoTracks()[0];
-            const oldVideoTrack = localStream.getVideoTracks()[0];
-            
-            // Replace video track in local stream
-            if (oldVideoTrack) {
-                localStream.removeTrack(oldVideoTrack);
-                oldVideoTrack.stop();
-            }
-            localStream.addTrack(newVideoTrack);
-            
-            // Update all peer connections with new video track
-            Object.values(peerConnections).forEach(pc => {
-                const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) {
-                    sender.replaceTrack(newVideoTrack);
-                }
-            });
+            await replaceTrackInConnections('video', newVideoStream.getVideoTracks()[0]);
             
             // Update local canvas with new video track
             if (canvases['localVideo']) {
-                const localCanvas = canvases['localVideo'].canvas;
-                initVideoTexture(localCanvas, localStream, 'local');
+                initVideoTexture(canvases['localVideo'].canvas, localStream, 'local');
             }
             
             console.log('Video source switched successfully');
