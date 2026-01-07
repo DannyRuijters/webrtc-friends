@@ -134,6 +134,13 @@ async function removeScreenShareFromPeers() {
                     roomId: roomId
                 });
                 
+                // Also send explicit screen-share-stopped message for reliability
+                sendSignalingMessage({
+                    type: 'screen-share-stopped',
+                    targetId: peerId,
+                    roomId: roomId
+                });
+                
                 console.log(`Removed screen share track from peer ${peerId}`);
             } catch (error) {
                 console.error(`Error removing screen share from peer ${peerId}:`, error);

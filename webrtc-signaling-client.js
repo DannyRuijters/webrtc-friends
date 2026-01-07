@@ -197,6 +197,15 @@ async function handleSignalingMessage(message) {
             const senderName = message.senderName || `Client ${message.senderId}`;
             displayChatMessage(message.text, senderName, false, message.timestamp);
             break;
+            
+        case 'screen-share-stopped':
+            const screenSharePeerId = message.senderId;
+            console.log(`Peer ${screenSharePeerId} stopped screen sharing`);
+            const screenCanvasId = `remote-${screenSharePeerId}-screen`;
+            if (canvases[screenCanvasId]) {
+                removeVideoCanvas(screenCanvasId);
+            }
+            break;
     }
 }
 
@@ -266,6 +275,14 @@ async function createPeerConnection(peerId, peerName) {
             // Handle screen share track ending (when track.stop() is called)
             event.track.onended = () => {
                 console.log(`Screen share track from peer ${peerId} ended`);
+                if (canvases[canvasId]) {
+                    removeVideoCanvas(canvasId);
+                }
+            };
+            
+            // Handle track mute (often fires when remote stops sharing)
+            event.track.onmute = () => {
+                console.log(`Screen share track from peer ${peerId} muted`);
                 if (canvases[canvasId]) {
                     removeVideoCanvas(canvasId);
                 }
