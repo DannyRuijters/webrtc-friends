@@ -200,10 +200,15 @@ async function handleSignalingMessage(message) {
             
         case 'screen-share-stopped':
             const screenSharePeerId = message.senderId;
-            console.log(`Peer ${screenSharePeerId} stopped screen sharing`);
+            console.log(`Received screen-share-stopped from peer ${screenSharePeerId}`);
             const screenCanvasId = `remote-${screenSharePeerId}-screen`;
+            console.log(`Looking for canvas: ${screenCanvasId}, exists: ${!!canvases[screenCanvasId]}`);
+            console.log(`Available canvases:`, Object.keys(canvases));
             if (canvases[screenCanvasId]) {
                 removeVideoCanvas(screenCanvasId);
+                console.log(`Removed screen share canvas for peer ${screenSharePeerId}`);
+            } else {
+                console.warn(`Screen share canvas ${screenCanvasId} not found`);
             }
             break;
     }
