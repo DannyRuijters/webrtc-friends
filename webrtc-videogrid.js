@@ -83,7 +83,8 @@ function rebalanceVideoGrid() {
     // Defer measurement until after layout is complete
     requestAnimationFrame(() => {
         const videoGrid = document.getElementById('videoGrid');
-        const rect = videoGrid.getBoundingClientRect();
+        const videoSection = videoGrid.parentElement;
+        const rect = videoSection.getBoundingClientRect();
         
         // Calculate available space accounting for gaps
         const gapSize = 10;
