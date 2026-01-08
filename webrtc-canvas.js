@@ -65,8 +65,8 @@ function renderFrame(canvas, image, imageWidth, imageHeight, mirror) {
     }
     
     // Calculate position (centered with translation)
-    const offsetX = (canvasWidth - drawWidth) / 2 - ctx.translateX * canvasWidth;
-    const offsetY = (canvasHeight - drawHeight) / 2 + ctx.translateY * canvasHeight;
+    const offsetX = ((canvasWidth - drawWidth) / 2 - ctx.translateX * canvasWidth) / ctx.zoom;
+    const offsetY = ((canvasHeight - drawHeight) / 2 + ctx.translateY * canvasHeight) / ctx.zoom;
     
     ctx.save();
     
