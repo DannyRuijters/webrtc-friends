@@ -31,8 +31,8 @@ function handleMouseMove(event) {
 
         const canvas = lastCanvas;
         const ctx = canvas.ctx;        
-        ctx.translateX -= deltaX * ctx.zoom / canvas.width;
-        ctx.translateY += deltaY * ctx.zoom / canvas.height;
+        ctx.translateX -= deltaX / canvas.width;
+        ctx.translateY += deltaY / canvas.height;
         
         renderFrame(canvas, canvas.videoElement, canvas.mirror);
         event.preventDefault();
@@ -107,8 +107,8 @@ function handleTouchMove(event) {
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
             
-            ctx.translateX -= 2.0 * deltaX * ctx.zoom / canvas.width;
-            ctx.translateY += 2.0 * deltaY * ctx.zoom / canvas.height;
+            ctx.translateX -= 2.0 * deltaX / canvas.width;
+            ctx.translateY += 2.0 * deltaY / canvas.height;
         }
         
         lastTouchCenterX = center.x;
