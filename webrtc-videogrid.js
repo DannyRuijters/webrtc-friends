@@ -12,6 +12,8 @@ function createVideoCanvas(canvasId, title, mirror = false) {
     const canvas = document.createElement('canvas');
     canvas.id = canvasId;
     canvas.className = 'video-canvas';
+    canvas.width = 640;
+    canvas.height = 640;
     canvas.mirror = mirror;
     container.appendChild(canvas);
     
