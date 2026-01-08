@@ -33,8 +33,8 @@ async function startScreenShare() {
         }
         
         const screenCanvas = canvases[screenShareCanvasId].canvas;
-        initCanvasGL(screenCanvas);
-        initVideoTexture(screenCanvas, stream, screenShareCanvasId);
+        initCanvasContext(screenCanvas);
+        initVideoStream(screenCanvas, stream, screenShareCanvasId);
         
         // Update button state
         updateShareButton(true);

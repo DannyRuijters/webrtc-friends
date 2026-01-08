@@ -124,7 +124,7 @@ async function handleVideoSourceChange() {
             
             // Update local canvas with new video track
             if (canvases['localVideo']) {
-                initVideoTexture(canvases['localVideo'].canvas, localStream, 'local');
+                initVideoStream(canvases['localVideo'].canvas, localStream, 'local');
             }
             
             console.log('Video source switched successfully');

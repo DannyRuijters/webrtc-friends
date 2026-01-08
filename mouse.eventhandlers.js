@@ -30,13 +30,14 @@ function handleMouseMove(event) {
         lastMouseY = newY;
 
         const canvas = lastCanvas;
-        const gl = canvas.gl;
-        const texture = gl.myTexture;
-        gl.translateX -= deltaX * texture.matrix[0] / canvas.width;
-        gl.translateY += deltaY * texture.matrix[4] / canvas.height;
+        const ctx = canvas.ctx;
+        const imageData = ctx.imageData;
+        if (!imageData) return;
         
-        linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
-        //window.requestAnimFrame(tick);
+        ctx.translateX -= deltaX * imageData.matrix[0] / canvas.width;
+        ctx.translateY += deltaY * imageData.matrix[4] / canvas.height;
+        
+        renderFrame(canvas, canvas.videoElement, imageData.width, imageData.height, canvas.mirror);
         event.preventDefault();
     }
 }
@@ -46,11 +47,16 @@ function handleMouseWheel(event) {
     event = window.event || event; // old IE support
     const delta = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
     const canvas = event.target;
-    const gl = canvas.gl;
-    gl.zoom -= 0.1 * delta;
-    if (gl.zoom < 0.001) gl.zoom = 0.001;  //prevent negative or zero zoom
-    const texture = gl.myTexture;
-    linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
+    const ctx = canvas.ctx;
+    if (!ctx) return false;
+    
+    ctx.zoom -= 0.1 * delta;
+    if (ctx.zoom < 0.001) ctx.zoom = 0.001;  //prevent negative or zero zoom
+    
+    const imageData = ctx.imageData;
+    if (imageData && canvas.videoElement) {
+        renderFrame(canvas, canvas.videoElement, imageData.width, imageData.height, canvas.mirror);
+    }
     event.preventDefault();
     return false;
 }
@@ -77,7 +83,7 @@ function handleTouchStart(event) {
         // Two touches - handle pan and zoom
         lastCanvas = canvas;
         lastTouchDistance = getTouchDistance(event.touches[0], event.touches[1]);
-        touchStartZoom = canvas.gl ? canvas.gl.zoom : 1.0;
+        touchStartZoom = canvas.ctx ? canvas.ctx.zoom : 1.0;
         const center = getTouchCenter(event.touches[0], event.touches[1]);
         lastTouchCenterX = center.x;
         lastTouchCenterY = center.y;
@@ -88,8 +94,9 @@ function handleTouchStart(event) {
 function handleTouchMove(event) {
     if (lastCanvas != null && event.touches.length === 2) {
         const canvas = lastCanvas;
-        const gl = canvas.gl;
-        const texture = gl.myTexture;
+        const ctx = canvas.ctx;
+        const imageData = ctx.imageData;
+        if (!imageData) return;
         
         // Calculate current distance and center
         const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
@@ -101,21 +108,23 @@ function handleTouchMove(event) {
         if (distanceChange > 15) {
             // Pinch to zoom
             const scale = currentDistance / lastTouchDistance;
-            gl.zoom = touchStartZoom / scale;
-            if (gl.zoom < 0.001) gl.zoom = 0.001;  // prevent negative or zero zoom
+            ctx.zoom = touchStartZoom / scale;
+            if (ctx.zoom < 0.001) ctx.zoom = 0.001;  // prevent negative or zero zoom
         } else {
             // Pan (two-finger drag)
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
             
-            gl.translateX -= 2.0 * deltaX * texture.matrix[0] / canvas.width;
-            gl.translateY += 2.0 * deltaY * texture.matrix[4] / canvas.height;
+            ctx.translateX -= 2.0 * deltaX * imageData.matrix[0] / canvas.width;
+            ctx.translateY += 2.0 * deltaY * imageData.matrix[4] / canvas.height;
         }
         
         lastTouchCenterX = center.x;
         lastTouchCenterY = center.y;
         
-        linearFilter(gl, texture, canvas.width, canvas.height, canvas.mirror);
+        if (canvas.videoElement) {
+            renderFrame(canvas, canvas.videoElement, imageData.width, imageData.height, canvas.mirror);
+        }
         event.preventDefault();
     }
 }

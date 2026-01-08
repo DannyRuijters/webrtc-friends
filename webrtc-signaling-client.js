@@ -273,8 +273,8 @@ async function createPeerConnection(peerId, peerName) {
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
-        initCanvasGL(remoteCanvas);
-        initVideoTexture(remoteCanvas, stream, canvasId);
+        initCanvasContext(remoteCanvas);
+        initVideoStream(remoteCanvas, stream, canvasId);
     };
     
     // Handle ICE candidates

@@ -2,37 +2,101 @@
 // See LICENSE file for terms and conditions.
 // https://github.com/dannyruijters/webrtc-friends
 
-function setupWebGLContextHandlers(canvas, canvasId) {
-    canvas.addEventListener('webglcontextlost', (event) => {
-        event.preventDefault();
-        console.warn(`WebGL context lost for ${canvasId}`);
-        if (canvas.intervalID) clearInterval(canvas.intervalID);
-        canvas.contextLost = true;
-        canvas.gl.myTexture = null; // Invalidate texture
-        canvas.gl = null;
-    }, false);
-    
-    canvas.addEventListener('webglcontextrestored', () => {
-        console.log(`WebGL context restored for ${canvasId}`);
-        
-        try {
-            initCanvasGL(canvas);
-            canvas.contextLost = false;
-            if (!canvas.videoElement?.srcObject) return;
-            
-            const videoElement = canvas.videoElement;
-            canvas.intervalID = setInterval(() => {
-                if (!canvas.contextLost && canvas.gl) {
-                    handleLoadedImage(canvas, videoElement, videoElement.videoWidth, videoElement.videoHeight);
-                }
-            }, 15);
-        } catch (error) {
-            console.error(`Error restoring WebGL context for ${canvasId}:`, error);
-        }
-    }, false);
+function initCanvas2D(canvas) {
+    let ctx;
+    try {
+        ctx = canvas.getContext("2d");
+        ctx.zoom = 1.0;
+        ctx.translateX = 0.0;
+        ctx.translateY = 0.0;
+        canvas.ctx = ctx;
+    } catch (e) {
+        console.error("Error initializing 2D context:", e);
+    }
+    if (!ctx) {
+        alert("Could not initialise Canvas 2D context, sorry :-(");
+    }
+    return ctx;
 }
 
-function initVideoTexture(canvas, stream, canvasId) {
+function initCanvasContext(canvas) {
+    console.log("Initializing Canvas 2D context for canvas:", canvas.id);
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    // set the size of the drawingBuffer based on the size it's displayed.
+    canvas.width = canvas.clientWidth * devicePixelRatio;
+    canvas.height = canvas.clientHeight * devicePixelRatio;
+    
+    const ctx = initCanvas2D(canvas);
+    return ctx;
+}
+
+function freeResources(ctx) {
+    // Canvas 2D doesn't need explicit resource cleanup like WebGL
+    // Just clear any stored references
+    if (ctx) {
+        ctx.imageData = null;
+    }
+}
+
+function renderFrame(canvas, image, imageWidth, imageHeight, mirror) {
+    const ctx = canvas.ctx;
+    if (!ctx) return;
+    
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // Clear canvas with black background
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    // Calculate aspect ratio correction
+    const imageAspect = imageWidth / imageHeight;
+    const canvasAspect = canvasWidth / canvasHeight;
+    
+    let drawWidth, drawHeight;
+    if (canvasAspect > imageAspect) {
+        // Canvas is wider than image - fit to height
+        drawHeight = canvasHeight / ctx.zoom;
+        drawWidth = drawHeight * imageAspect;
+    } else {
+        // Canvas is taller than image - fit to width
+        drawWidth = canvasWidth / ctx.zoom;
+        drawHeight = drawWidth / imageAspect;
+    }
+    
+    // Calculate position (centered with translation)
+    const offsetX = (canvasWidth - drawWidth) / 2 - ctx.translateX * canvasWidth;
+    const offsetY = (canvasHeight - drawHeight) / 2 + ctx.translateY * canvasHeight;
+    
+    ctx.save();
+    
+    // Apply mirror transform if needed
+    if (mirror) {
+        ctx.translate(canvasWidth, 0);
+        ctx.scale(-1, 1);
+        // Adjust offsetX for mirrored rendering
+        ctx.drawImage(image, canvasWidth - offsetX - drawWidth, offsetY, drawWidth, drawHeight);
+    } else {
+        ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
+    }
+    
+    ctx.restore();
+    
+    // Store matrix info for event handlers compatibility
+    ctx.imageData = {
+        width: imageWidth,
+        height: imageHeight,
+        drawWidth: drawWidth,
+        drawHeight: drawHeight,
+        matrix: [ctx.zoom, 0, 0, 0, ctx.zoom, 0, ctx.translateX, ctx.translateY, 1]
+    };
+}
+
+function handleLoadedImage(canvas, image, width, height) {
+    renderFrame(canvas, image, width, height, canvas.mirror);
+}
+
+function initVideoStream(canvas, stream, canvasId) {
     let intervalID;
     const videoElement = document.createElement('video');
     videoElement.autoplay = true;
@@ -46,8 +110,8 @@ function initVideoTexture(canvas, stream, canvasId) {
         });
         if (intervalID) clearInterval(intervalID);
         intervalID = setInterval(() => {
-            // Skip rendering if WebGL context is lost
-            if (!canvas.contextLost && canvas.gl && typeof handleLoadedImage === 'function') {
+            // Skip rendering if canvas context is lost
+            if (!canvas.contextLost && canvas.ctx && typeof handleLoadedImage === 'function') {
                 try {
                     handleLoadedImage(canvas, videoElement, videoElement.videoWidth, videoElement.videoHeight);
                 } catch (error) {
@@ -108,15 +172,15 @@ async function startLocalVideo() {
         }
         
         const localCanvas = canvases['localVideo'].canvas;
-        initCanvasGL(localCanvas);
-        initVideoTexture(localCanvas, localStream, 'local');        
+        initCanvasContext(localCanvas);
+        initVideoStream(localCanvas, localStream, 'local');        
         console.log('Local camera started');
     } catch (error) {
         console.error("Error accessing media devices:", error);
     }
 }
 
-function webGLStart() {
+function initialize() {
     addEventHandlers();
     loadCredentialsFromCookies();
     startLocalVideo();
@@ -136,4 +200,4 @@ function webGLStart() {
     console.log("Ready. Connect to signaling server first.");
 }
 
-window.addEventListener('DOMContentLoaded', webGLStart);
+window.addEventListener('DOMContentLoaded', initialize);
