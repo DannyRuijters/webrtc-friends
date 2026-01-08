@@ -49,9 +49,9 @@ function renderFrame(canvas, videoElement, mirror) {
         : canvasHeight / videoElement.videoHeight; // Canvas is taller - scale to height
     
     ctx.save();
+    ctx.scale(1 / ctx.zoom, 1 / ctx.zoom); // Apply zoom (user zoom inverts: smaller value = more zoomed in)
     ctx.translate(canvasWidth / 2, canvasHeight / 2); // Move origin to center
     ctx.translate(-ctx.translateX * canvasWidth, ctx.translateY * canvasHeight); // Apply panning
-    ctx.scale(1 / ctx.zoom, 1 / ctx.zoom); // Apply zoom (user zoom inverts: smaller value = more zoomed in)
     if (mirror) { ctx.scale(-1, 1); } // Apply mirror transform if needed
     ctx.scale(baseScale, baseScale); // Apply base scale to fit/cover canvas
     
