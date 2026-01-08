@@ -31,9 +31,9 @@ function handleMouseMove(event) {
 
         const canvas = lastCanvas;
         const ctx = canvas.ctx;        
-        ctx.translateX -= 2.0 * deltaX / canvas.width;
-        ctx.translateY += 2.0 * deltaY / canvas.height;
-
+        ctx.translateX -= deltaX / canvas.width;
+        ctx.translateY += deltaY / canvas.height;
+        
         renderFrame(canvas, canvas.videoElement, canvas.mirror);
         event.preventDefault();
     }
