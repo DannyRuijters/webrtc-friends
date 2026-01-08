@@ -30,14 +30,11 @@ function handleMouseMove(event) {
         lastMouseY = newY;
 
         const canvas = lastCanvas;
-        const ctx = canvas.ctx;
-        const imageData = ctx.imageData;
-        if (!imageData) return;
+        const ctx = canvas.ctx;        
+        ctx.translateX -= deltaX * ctx.zoom / canvas.width;
+        ctx.translateY += deltaY * ctx.zoom / canvas.height;
         
-        ctx.translateX -= deltaX * imageData.matrix[0] / canvas.width;
-        ctx.translateY += deltaY * imageData.matrix[4] / canvas.height;
-        
-        renderFrame(canvas, canvas.videoElement, imageData.width, imageData.height, canvas.mirror);
+        renderFrame(canvas, canvas.videoElement, canvas.mirror);
         event.preventDefault();
     }
 }
@@ -53,10 +50,7 @@ function handleMouseWheel(event) {
     ctx.zoom -= 0.1 * delta;
     if (ctx.zoom < 0.001) ctx.zoom = 0.001;  //prevent negative or zero zoom
     
-    const imageData = ctx.imageData;
-    if (imageData && canvas.videoElement) {
-        renderFrame(canvas, canvas.videoElement, imageData.width, imageData.height, canvas.mirror);
-    }
+    if (canvas.videoElement) { renderFrame(canvas, canvas.videoElement, canvas.mirror); }
     event.preventDefault();
     return false;
 }
@@ -95,8 +89,6 @@ function handleTouchMove(event) {
     if (lastCanvas != null && event.touches.length === 2) {
         const canvas = lastCanvas;
         const ctx = canvas.ctx;
-        const imageData = ctx.imageData;
-        if (!imageData) return;
         
         // Calculate current distance and center
         const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
@@ -115,15 +107,15 @@ function handleTouchMove(event) {
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
             
-            ctx.translateX -= 2.0 * deltaX * imageData.matrix[0] / canvas.width;
-            ctx.translateY += 2.0 * deltaY * imageData.matrix[4] / canvas.height;
+            ctx.translateX -= 2.0 * deltaX * ctx.zoom / canvas.width;
+            ctx.translateY += 2.0 * deltaY * ctx.zoom / canvas.height;
         }
         
         lastTouchCenterX = center.x;
         lastTouchCenterY = center.y;
         
         if (canvas.videoElement) {
-            renderFrame(canvas, canvas.videoElement, imageData.width, imageData.height, canvas.mirror);
+            renderFrame(canvas, canvas.videoElement, canvas.mirror);
         }
         event.preventDefault();
     }

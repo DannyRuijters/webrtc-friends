@@ -30,15 +30,7 @@ function initCanvasContext(canvas) {
     return ctx;
 }
 
-function freeResources(ctx) {
-    // Canvas 2D doesn't need explicit resource cleanup like WebGL
-    // Just clear any stored references
-    if (ctx) {
-        ctx.imageData = null;
-    }
-}
-
-function renderFrame(canvas, image, imageWidth, imageHeight, mirror) {
+function renderFrame(canvas, videoElement, mirror) {
     const ctx = canvas.ctx;
     if (!ctx) return;
     
@@ -49,51 +41,28 @@ function renderFrame(canvas, image, imageWidth, imageHeight, mirror) {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
-    // Calculate aspect ratio correction - use "cover" mode to fill entire canvas
-    const imageAspect = imageWidth / imageHeight;
+    // Calculate scale to cover entire canvas (no black bars)
+    const imageAspect = videoElement.videoWidth / videoElement.videoHeight;
     const canvasAspect = canvasWidth / canvasHeight;
-    
-    let drawWidth, drawHeight;
-    if (canvasAspect > imageAspect) {
-        // Canvas is wider than image - fit to width (crop top/bottom)
-        drawWidth = canvasWidth / ctx.zoom;
-        drawHeight = drawWidth / imageAspect;
-    } else {
-        // Canvas is taller than image - fit to height (crop left/right)
-        drawHeight = canvasHeight / ctx.zoom;
-        drawWidth = drawHeight * imageAspect;
-    }
-    
-    // Calculate position (centered with translation)
-    const offsetX = ((canvasWidth - drawWidth) / 2 - ctx.translateX * canvasWidth) / ctx.zoom;
-    const offsetY = ((canvasHeight - drawHeight) / 2 + ctx.translateY * canvasHeight) / ctx.zoom;
+    const baseScale = (canvasAspect > imageAspect) 
+        ? canvasWidth / videoElement.videoWidth   // Canvas is wider - scale to width
+        : canvasHeight / videoElement.videoHeight; // Canvas is taller - scale to height
     
     ctx.save();
+    ctx.translate(canvasWidth / 2, canvasHeight / 2); // Move origin to center
+    ctx.translate(-ctx.translateX * canvasWidth, ctx.translateY * canvasHeight); // Apply panning
+    ctx.scale(1 / ctx.zoom, 1 / ctx.zoom); // Apply zoom (user zoom inverts: smaller value = more zoomed in)
+    if (mirror) { ctx.scale(-1, 1); } // Apply mirror transform if needed
+    ctx.scale(baseScale, baseScale); // Apply base scale to fit/cover canvas
     
-    // Apply mirror transform if needed
-    if (mirror) {
-        ctx.translate(canvasWidth, 0);
-        ctx.scale(-1, 1);
-        // Adjust offsetX for mirrored rendering
-        ctx.drawImage(image, canvasWidth - offsetX - drawWidth, offsetY, drawWidth, drawHeight);
-    } else {
-        ctx.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
-    }
-    
+    // Draw image centered at origin
+    ctx.drawImage(videoElement, 
+        -videoElement.videoWidth / 2, 
+        -videoElement.videoHeight / 2, 
+        videoElement.videoWidth, 
+        videoElement.videoHeight
+    );
     ctx.restore();
-    
-    // Store matrix info for event handlers compatibility
-    ctx.imageData = {
-        width: imageWidth,
-        height: imageHeight,
-        drawWidth: drawWidth,
-        drawHeight: drawHeight,
-        matrix: [ctx.zoom, 0, 0, 0, ctx.zoom, 0, ctx.translateX, ctx.translateY, 1]
-    };
-}
-
-function handleLoadedImage(canvas, image, width, height) {
-    renderFrame(canvas, image, width, height, canvas.mirror);
 }
 
 function initVideoStream(canvas, stream, canvasId) {
@@ -111,9 +80,9 @@ function initVideoStream(canvas, stream, canvasId) {
         if (intervalID) clearInterval(intervalID);
         intervalID = setInterval(() => {
             // Skip rendering if canvas context is lost
-            if (!canvas.contextLost && canvas.ctx && typeof handleLoadedImage === 'function') {
+            if (!canvas.contextLost && canvas.ctx) {
                 try {
-                    handleLoadedImage(canvas, videoElement, videoElement.videoWidth, videoElement.videoHeight);
+                    renderFrame(canvas, videoElement, canvas.mirror);
                 } catch (error) {
                     // If error occurs during rendering, it might be context loss
                     if (!canvas.contextLost) {

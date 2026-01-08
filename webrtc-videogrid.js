@@ -34,18 +34,6 @@ function removeVideoCanvas(canvasId) {
         if (canvasData.canvas.intervalID) {
             clearInterval(canvasData.canvas.intervalID);
         }
-        // Clean up canvas context
-        if (canvasData.canvas.ctx) {
-            try {
-                const ctx = canvasData.canvas.ctx;
-                // Free resources
-                if (typeof freeResources === 'function') {
-                    freeResources(ctx);
-                }
-            } catch (e) {
-                console.error(`Error cleaning up canvas for ${canvasId}:`, e);
-            }
-        }
         // Remove from DOM
         if (canvasData.container && canvasData.container.parentNode) {
             canvasData.container.parentNode.removeChild(canvasData.container);
@@ -94,9 +82,7 @@ function rebalanceVideoGrid() {
                 if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
                     canvas.width = bufferWidth;
                     canvas.height = bufferHeight;
-                    if (canvas.ctx?.imageData && canvas.videoElement) {
-                        renderFrame(canvas, canvas.videoElement, canvas.ctx.imageData.width, canvas.ctx.imageData.height, canvas.mirror);
-                    }
+                    if (canvas.videoElement) { renderFrame(canvas, canvas.videoElement, canvas.mirror); }
                 }
             });
         });
