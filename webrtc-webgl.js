@@ -81,7 +81,7 @@ async function startLocalVideo() {
         const videoSelect = document.getElementById('videoSource');
         
         const constraints = {
-            video: { width: 1280, height: 720 },
+            video: { width: videoWidth, height: videoHeight },
             audio: true
         };
         
@@ -89,8 +89,8 @@ async function startLocalVideo() {
         if (videoSelect && videoSelect.value) {
             constraints.video = {
                 deviceId: { exact: videoSelect.value },
-                width: 1280,
-                height: 720
+                width: videoWidth,
+                height: videoHeight
             };
         }
         

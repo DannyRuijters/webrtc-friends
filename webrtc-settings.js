@@ -2,6 +2,9 @@
 // See LICENSE file for terms and conditions.
 // https://github.com/dannyruijters/webrtc-friends
 
+let videoWidth = 1280;
+let videoHeight = 720;
+
 // Settings overlay window functions
 function openOverlay() {
     populateMediaDevices();
@@ -18,24 +21,15 @@ async function populateMediaDevices() {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioSelect = document.getElementById('audioSource');
         const videoSelect = document.getElementById('videoSource');
-        
-        // Get currently active device IDs if local stream exists
         let currentAudioId = null;
         let currentVideoId = null;
         
+        // Get currently active device IDs if local stream exists
         if (localStream) {
             const audioTrack = localStream.getAudioTracks()[0];
             const videoTrack = localStream.getVideoTracks()[0];
-            
-            if (audioTrack) {
-                const settings = audioTrack.getSettings();
-                currentAudioId = settings.deviceId;
-            }
-            
-            if (videoTrack) {
-                const settings = videoTrack.getSettings();
-                currentVideoId = settings.deviceId;
-            }
+            if (audioTrack) { currentAudioId = audioTrack.getSettings().deviceId; }
+            if (videoTrack) { currentVideoId = videoTrack.getSettings().deviceId; }
         }
         
         // Clear existing options
@@ -48,9 +42,7 @@ async function populateMediaDevices() {
             const option = document.createElement('option');
             option.value = device.deviceId;
             option.text = device.label || `Microphone ${index + 1}`;
-            if (device.deviceId === currentAudioId) {
-                option.selected = true;
-            }
+            option.selected = (device.deviceId === currentAudioId);
             audioSelect.appendChild(option);
         });
         
@@ -60,11 +52,14 @@ async function populateMediaDevices() {
             const option = document.createElement('option');
             option.value = device.deviceId;
             option.text = device.label || `Camera ${index + 1}`;
-            if (device.deviceId === currentVideoId) {
-                option.selected = true;
-            }
+            option.selected = (device.deviceId === currentVideoId);
             videoSelect.appendChild(option);
         });
+
+        // Set video resolution dropdown to current settings
+        const resolutionSelect = document.getElementById('videoResolution');
+        const currentResolution = `${videoWidth}x${videoHeight}`;
+        resolutionSelect.value = currentResolution;
     } catch (error) {
         console.error('Error enumerating devices:', error);
     }
@@ -120,8 +115,8 @@ async function handleVideoSourceChange() {
             const newVideoStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     deviceId: { exact: selectedDeviceId },
-                    width: 1280,
-                    height: 720
+                    width: videoWidth,
+                    height: videoHeight
                 }
             });
             
@@ -137,6 +132,21 @@ async function handleVideoSourceChange() {
             console.error('Error switching video source:', error);
         }
     }
+}
+
+// Handle video resolution change
+function handleVideoResolutionChange() {
+    const resolutionSelect = document.getElementById('videoResolution');
+    const selectedResolution = resolutionSelect.value;
+    console.log('Video resolution changed to:', selectedResolution);
+
+    const [width, height] = selectedResolution.split('x').map(Number);
+    videoWidth = width;
+    videoHeight = height;
+    setCookie('webrtc_videoWidth', String(videoWidth));
+    setCookie('webrtc_videoHeight', String(videoHeight));
+
+    handleVideoSourceChange();  // Apply video source with new resolution
 }
 
 // Close overlay when clicking outside the content

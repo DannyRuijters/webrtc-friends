@@ -10,7 +10,7 @@ function setCookie(name, value, days = 365) {
     document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
 }
 
-function getCookie(name) {
+function getCookie(name, defaultValue = null) {
     const nameEQ = name + "=";
     const ca = document.cookie.split(';');
     for (let i = 0; i < ca.length; i++) {
@@ -20,7 +20,7 @@ function getCookie(name) {
             return decodeURIComponent(c.substring(nameEQ.length, c.length));
         }
     }
-    return null;
+    return defaultValue;
 }
 
 function getUrlParameter(name) {
@@ -48,4 +48,8 @@ function loadCredentialsFromCookies() {
             roomIdInput.value = roomIdToUse;
         }
     }
+
+    // Load video resolution settings
+    videoWidth = parseInt(getCookie('webrtc_videoWidth', String(videoWidth)), 10);
+    videoHeight = parseInt(getCookie('webrtc_videoHeight', String(videoHeight)), 10);
 }

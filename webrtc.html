@@ -51,6 +51,15 @@
                     <label for="videoSource">Video source:</label>
                     <select id="videoSource" onchange="handleVideoSourceChange()"></select>
                 </div>
+                <div class="overlay-row">
+                    <label for="videoResolution">Resolution:</label>
+                    <select id="videoResolution" onchange="handleVideoResolutionChange()">
+                        <option value="320x240">320x240 (Low)</option>
+                        <option value="640x480">640x480 (VGA)</option>
+                        <option value="1280x720">1280x720 (HD)</option>
+                        <option value="1920x1080">1920x1080 (Full HD)</option>
+                    </select>
+                </div>
             </div>
         </div>
         

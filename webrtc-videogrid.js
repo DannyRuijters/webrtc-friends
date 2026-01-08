@@ -4,8 +4,6 @@
 
 function createVideoCanvas(canvasId, title, mirror = false) {
     const videoGrid = document.getElementById('videoGrid');
-    
-    // Create container div with zero padding
     const container = document.createElement('div');
     container.className = 'video-box';
     container.id = `${canvasId}-container`;
@@ -14,8 +12,6 @@ function createVideoCanvas(canvasId, title, mirror = false) {
     const canvas = document.createElement('canvas');
     canvas.id = canvasId;
     canvas.className = 'video-canvas';
-    canvas.width = 640;
-    canvas.height = 640;
     canvas.mirror = mirror;
     container.appendChild(canvas);
     
@@ -24,19 +20,10 @@ function createVideoCanvas(canvasId, title, mirror = false) {
     h3.textContent = title;
     container.appendChild(h3);
    
-    // Add to grid
-    videoGrid.appendChild(container);
-    
-    // Add mouse events for the new canvas
-    addMouseEvents(canvas);
-    
-    // Add WebGL context lost/restored handlers
-    setupWebGLContextHandlers(canvas, canvasId);
-    
-    // Rebalance grid layout - use requestAnimationFrame to ensure DOM is laid out
-    requestAnimationFrame(() => {
-        rebalanceVideoGrid();
-    });
+    videoGrid.appendChild(container); // Add to grid
+    addMouseEvents(canvas); // Add mouse events for the new canvas
+    setupWebGLContextHandlers(canvas, canvasId); // Add WebGL context lost/restored handlers
+    rebalanceVideoGrid(); // Rebalance grid
     
     return { canvas, container };
 }
@@ -69,10 +56,8 @@ function removeVideoCanvas(canvasId) {
         if (canvasData.container && canvasData.container.parentNode) {
             canvasData.container.parentNode.removeChild(canvasData.container);
         }
-        // Remove from tracking
-        delete canvases[canvasId];
-        // Rebalance grid
-        rebalanceVideoGrid();
+        delete canvases[canvasId]; // Remove from tracking
+        rebalanceVideoGrid(); // Rebalance grid
     }
 }
 
