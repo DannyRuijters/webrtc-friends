@@ -49,19 +49,19 @@ function renderFrame(canvas, image, imageWidth, imageHeight, mirror) {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
-    // Calculate aspect ratio correction
+    // Calculate aspect ratio correction - use "cover" mode to fill entire canvas
     const imageAspect = imageWidth / imageHeight;
     const canvasAspect = canvasWidth / canvasHeight;
     
     let drawWidth, drawHeight;
     if (canvasAspect > imageAspect) {
-        // Canvas is wider than image - fit to height
-        drawHeight = canvasHeight / ctx.zoom;
-        drawWidth = drawHeight * imageAspect;
-    } else {
-        // Canvas is taller than image - fit to width
+        // Canvas is wider than image - fit to width (crop top/bottom)
         drawWidth = canvasWidth / ctx.zoom;
         drawHeight = drawWidth / imageAspect;
+    } else {
+        // Canvas is taller than image - fit to height (crop left/right)
+        drawHeight = canvasHeight / ctx.zoom;
+        drawWidth = drawHeight * imageAspect;
     }
     
     // Calculate position (centered with translation)
