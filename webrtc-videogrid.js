@@ -12,8 +12,6 @@ function createVideoCanvas(canvasId, title, mirror = false) {
     const canvas = document.createElement('canvas');
     canvas.id = canvasId;
     canvas.className = 'video-canvas';
-    canvas.width = 640;
-    canvas.height = 640;
     canvas.mirror = mirror;
     container.appendChild(canvas);
     
@@ -25,7 +23,7 @@ function createVideoCanvas(canvasId, title, mirror = false) {
     videoGrid.appendChild(container); // Add to grid
     addMouseEvents(canvas); // Add mouse events for the new canvas
     setupWebGLContextHandlers(canvas, canvasId); // Add WebGL context lost/restored handlers
-    rebalanceVideoGrid(); // Rebalance grid
+    requestAnimationFrame(rebalanceVideoGrid); // Rebalance grid
     
     return { canvas, container };
 }
