@@ -87,7 +87,7 @@ Use the chat panel on the right to send text messages to all participants in the
 ### E-mail meeting invite
 
 You can send a meeting invite using your favorite e-mail or agenda software with a link to open the WebRTC-Friends meeting.
-The link format should be: `https://your-server/?room=ROOM_ID`, whereby you replace `your-server` with the URL to your server and `ROOM_ID` with a freely chosen string.
+The link format should be: `https://your-server/?roomid=ROOM_ID`, whereby you replace `your-server` with the URL to your server and `ROOM_ID` with a freely chosen string.
 
 ## Running as a System Service (Linux)
 
