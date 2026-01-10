@@ -317,6 +317,11 @@ async function handleAnswer(answer, peerId) {
     if (!pc) return;
     
     try {
+        // Allow answers with more tracks than the offer by handling negotiation needed events
+        pc.onnegotiationneeded = async () => {
+            if (pc.signalingState === 'stable') { await sendRenegotiationOffer(peerId); }
+        };
+        
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (error) {
         console.error("Error handling answer:", error);
@@ -325,8 +330,6 @@ async function handleAnswer(answer, peerId) {
 
 async function handleOffer(offer, senderId, peerName) {
     try {
-        if (!localStream) await startLocalVideo();
-        
         // Check if we already have a connection with this peer (renegotiation)
         let pc = peerConnections[senderId];
         const isRenegotiation = pc && pc.connectionState !== 'closed';
