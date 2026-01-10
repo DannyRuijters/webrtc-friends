@@ -22,15 +22,6 @@ const configuration = {
     ]
 };
 
-// Helper function to ensure peer exists while preserving existing data
-function ensurePeerExists(peerId, peerName, shouldUpdateName = false) {
-    if (!remotePeers[peerId]) {
-        remotePeers[peerId] = { name: peerName, isMuted: false };
-    } else if (shouldUpdateName) {
-        remotePeers[peerId].name = peerName;
-    }
-}
-
 function toggleConnection() {
     if (signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
         disconnectFromServer();
@@ -143,20 +134,11 @@ async function handleSignalingMessage(message) {
                 const peerName = message.peerName || `Peer-${message.clientId}`;
                 const peerId = message.clientId;
                 const peersInRoom = message.peersInRoom || message.totalClients;
+                const isMuted = message.isMuted;
                 
                 // Track the new peer with mute state
-                remotePeers[peerId] = { name: peerName, isMuted: false };
+                remotePeers[peerId] = { name: peerName, isMuted: isMuted };
                 console.log(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
-                
-                // Send our current mute state to the new peer
-                if (typeof isMuted !== 'undefined') {
-                    sendSignalingMessage({
-                        type: 'mute-state',
-                        isMuted: isMuted,
-                        targetId: peerId,
-                        roomId: roomId
-                    });
-                }
                 
                 // If we have local stream and no existing connection to this peer, automatically call
                 if (localStream && !peerConnections[peerId]) {
@@ -186,13 +168,13 @@ async function handleSignalingMessage(message) {
             
         case 'offer':
             const peerNameOffer = message.peerName || `Peer-${message.senderId}`;
-            ensurePeerExists(message.senderId, peerNameOffer, !!message.peerName);
+            remotePeers[message.senderId] = { name: peerNameOffer };
             await handleOffer(message.offer, message.senderId, peerNameOffer);
             break;
             
         case 'answer':
             const peerNameAnswer = message.peerName || remotePeers[message.senderId]?.name || `Peer-${message.senderId}`;
-            ensurePeerExists(message.senderId, peerNameAnswer, !!message.peerName);
+            if (message.peerName) remotePeers[message.senderId] = { name: peerNameAnswer };
             await handleAnswer(message.answer, message.senderId);
             break;
             
@@ -208,12 +190,9 @@ async function handleSignalingMessage(message) {
             break;
             
         case 'mute-state':
-            // Only process if the message is for us (targeted) or broadcast to all
-            if (!message.targetId || message.targetId === myClientId) {
-                if (remotePeers[message.senderId]) {
-                    remotePeers[message.senderId].isMuted = message.isMuted;
-                    updateRemotePeerDisplay(message.senderId);
-                }
+            if (remotePeers[message.senderId]) {
+                remotePeers[message.senderId].isMuted = message.isMuted;
+                updateRemotePeerDisplay(message.senderId);
             }
             break;
             
@@ -360,7 +339,8 @@ async function createAndSendOffer(targetId, peerName) {
             offer: offer,
             targetId: targetId,
             peerName: myName,
-            roomId: roomId
+            roomId: roomId,
+            isMuted: isMuted
         });
         
         console.log(`Sent offer to "${peerName}" (Client ${targetId})`);
