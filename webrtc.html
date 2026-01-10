@@ -8,7 +8,7 @@
     
     <script src="webrtc-signaling-client.js"></script>
     <script src="webrtc-cookie.js"></script>
-    <script src="webrtc-canvas.js"></script>
+    <script src="webrtc-toolbar.js"></script>
     <script src="webrtc-videogrid.js"></script>
     <script src="webrtc-chat.js"></script>
     <script src="webrtc-settings.js"></script>
@@ -33,7 +33,8 @@
                 </div>
                 <button id="connectionBtn" onclick="toggleConnection()">Connect</button>
                 <button id="shareBtn" onclick="toggleScreenShare()">Share</button>
-                <button id="muteBtn" onclick="toggleMute()" disabled>&#127908;</button>
+                <button id="muteBtn" onclick="toggleMute()" disabled>Mute</button>
+                <button id="linkBtn" onclick="createLink()" disabled>&#128279;</button>
                 <button id="overlayBtn" onclick="openOverlay()">&#9881;</button>
             </div>
         </div>
