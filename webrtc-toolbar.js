@@ -31,7 +31,7 @@ function updateButtonState(disabled = false) {
     const shareBtn = document.getElementById('shareBtn');
     if (shareBtn) { 
         shareBtn.disabled = disabled || !isScreenShareSupported();
-        if (shareBtn.disabled) { shareBtn.textContent = 'Share'; }
+        if (shareBtn.disabled) { stopScreenShare(); }
     }
 
     const muteBtn = document.getElementById('muteBtn');
