@@ -22,6 +22,15 @@ const configuration = {
     ]
 };
 
+// Helper function to ensure peer exists while preserving existing data
+function ensurePeerExists(peerId, peerName, shouldUpdateName = false) {
+    if (!remotePeers[peerId]) {
+        remotePeers[peerId] = { name: peerName, isMuted: false };
+    } else if (shouldUpdateName) {
+        remotePeers[peerId].name = peerName;
+    }
+}
+
 function toggleConnection() {
     if (signalingSocket && signalingSocket.readyState === WebSocket.OPEN) {
         disconnectFromServer();
@@ -177,13 +186,13 @@ async function handleSignalingMessage(message) {
             
         case 'offer':
             const peerNameOffer = message.peerName || `Peer-${message.senderId}`;
-            remotePeers[message.senderId] = { name: peerNameOffer };
+            ensurePeerExists(message.senderId, peerNameOffer, !!message.peerName);
             await handleOffer(message.offer, message.senderId, peerNameOffer);
             break;
             
         case 'answer':
             const peerNameAnswer = message.peerName || remotePeers[message.senderId]?.name || `Peer-${message.senderId}`;
-            if (message.peerName) remotePeers[message.senderId] = { name: peerNameAnswer };
+            ensurePeerExists(message.senderId, peerNameAnswer, !!message.peerName);
             await handleAnswer(message.answer, message.senderId);
             break;
             
