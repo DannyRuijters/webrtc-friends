@@ -168,13 +168,13 @@ async function handleSignalingMessage(message) {
             
         case 'offer':
             const peerNameOffer = message.peerName || `Peer-${message.senderId}`;
-            remotePeers[message.senderId] = { name: peerNameOffer };
+            remotePeers[message.senderId] = { name: peerNameOffer, isMuted: message.isMuted };
             await handleOffer(message.offer, message.senderId, peerNameOffer);
             break;
             
         case 'answer':
             const peerNameAnswer = message.peerName || remotePeers[message.senderId]?.name || `Peer-${message.senderId}`;
-            if (message.peerName) remotePeers[message.senderId] = { name: peerNameAnswer };
+            if (message.peerName) remotePeers[message.senderId] = { name: peerNameAnswer, isMuted: message.isMuted };
             await handleAnswer(message.answer, message.senderId);
             break;
             
