@@ -334,6 +334,16 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.broadcast(message, exclude_client_id=client_id, room_id=room_id)
                 logger.info(f"  → Chat message from '{sender_name}' broadcasted to room '{room_id}'")
                     
+            elif message_type == "mute-state":
+                # Relay mute state to all peers in same room
+                message = {
+                    "type": "mute-state",
+                    "senderId": client_id,
+                    "isMuted": data.get("isMuted", False)
+                }
+                await manager.broadcast(message, exclude_client_id=client_id, room_id=room_id)
+                logger.info(f"  → Mute state ({data.get('isMuted', False)}) broadcasted to room '{room_id}'")
+                    
             elif message_type == "screen-share-stopped":
                 # Forward screen share stopped message to target peer
                 target_id = data.get("targetId")

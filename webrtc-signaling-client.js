@@ -9,8 +9,9 @@ let signalingSocket = null;
 let myClientId = null;
 let myName = '';
 let roomId = '';
-let remotePeers = {}; // Track remote peers: { peerId: { name: 'name', ... } }
+let remotePeers = {}; // Track remote peers: { peerId: { name: 'name', isMuted: false, ... } }
 let chatEnabled = false;
+let isMuted = false;
 
 const SIGNALING_SERVER = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:${window.location.port}/ws`;
 
@@ -26,6 +27,66 @@ function toggleConnection() {
         disconnectFromServer();
     } else {
         connectToSignalingServer();
+    }
+}
+
+function toggleMute() {
+    const audioTracks = localStream?.getAudioTracks();
+    if (audioTracks?.length === 0) {
+        console.log('No audio tracks available to mute');
+        return;
+    }
+    
+    isMuted = !isMuted;
+    audioTracks.forEach(track => {
+        track.enabled = !isMuted;
+    });
+    
+    updateMuteButton();
+    updateLocalPeerDisplay();
+    
+    // Send mute state to other peers
+    sendSignalingMessage({
+        type: 'mute-state',
+        isMuted: isMuted,
+        roomId: roomId
+    });
+    
+    console.log(`Audio ${isMuted ? 'muted' : 'unmuted'}`);
+}
+
+function updateMuteButton(disabled = false) {
+    const muteBtn = document.getElementById('muteBtn');
+    if (muteBtn) {
+        muteBtn.textContent = isMuted ? '\u{1F507}' : '&#127908;';
+        muteBtn.style.backgroundColor = isMuted ? '#ff4444' : '';
+        muteBtn.title = isMuted ? 'Unmute microphone' : 'Mute microphone';
+        muteBtn.disabled = disabled;
+    }
+}
+
+function updateLocalPeerDisplay() {
+    const localPeerInfo = document.getElementById('localVideoPeerInfo');
+    if (localPeerInfo) {
+        const mutedSuffix = isMuted ? ' (muted)' : '';
+        localPeerInfo.textContent = `${myName}${mutedSuffix} (ID: ${myClientId}) - Room: ${roomId}`;
+    }
+}
+
+function updateRemotePeerDisplay(peerId) {
+    const peer = remotePeers[peerId];
+    if (!peer) return;
+    
+    const mutedSuffix = peer.isMuted ? ' (muted)' : '';
+    const displayName = `${peer.name}${mutedSuffix}`;
+    
+    // Update main camera canvas
+    const mainCanvasId = `remote-${peerId}`;
+    if (canvases[mainCanvasId]) {
+        const peerInfo = canvases[mainCanvasId].container.querySelector('.peer-info');
+        if (peerInfo) {
+            peerInfo.textContent = displayName;
+        }
     }
 }
 
@@ -67,6 +128,7 @@ function connectToSignalingServer() {
             updateConnectionButton(false);
             document.getElementById('chatInput').disabled = true;
             document.getElementById('sendChatBtn').disabled = true;
+            updateMuteButton(true);
             chatEnabled = false;
             signalingSocket = null;
             myClientId = null;
@@ -88,6 +150,10 @@ function disconnectFromServer() {
     Object.keys(canvases)
         .filter(id => id.startsWith('remote-'))
         .forEach(removeVideoCanvas);
+    
+    // Reset mute state and disable button
+    isMuted = false;
+    updateMuteButton(true);
     
     remotePeers = {};
     console.log('Disconnected from server');
@@ -114,6 +180,8 @@ async function handleSignalingMessage(message) {
             chatEnabled = true;
             document.getElementById('chatInput').disabled = false;
             document.getElementById('sendChatBtn').disabled = false;
+            updateMuteButton(false);
+            updateLocalPeerDisplay();
             break;
             
         case 'room-redirect':
@@ -127,8 +195,8 @@ async function handleSignalingMessage(message) {
                 const peerId = message.clientId;
                 const peersInRoom = message.peersInRoom || message.totalClients;
                 
-                // Track the new peer
-                remotePeers[peerId] = { name: peerName };                
+                // Track the new peer with mute state
+                remotePeers[peerId] = { name: peerName, isMuted: false };
                 console.log(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
                 
                 // If we have local stream and no existing connection to this peer, automatically call
@@ -178,6 +246,13 @@ async function handleSignalingMessage(message) {
         case 'chat':
             const senderName = message.senderName || `Client ${message.senderId}`;
             displayChatMessage(message.text, senderName, false, message.timestamp);
+            break;
+            
+        case 'mute-state':
+            if (remotePeers[message.senderId]) {
+                remotePeers[message.senderId].isMuted = message.isMuted;
+                updateRemotePeerDisplay(message.senderId);
+            }
             break;
             
         case 'screen-share-stopped':
