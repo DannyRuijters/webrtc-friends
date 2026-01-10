@@ -295,7 +295,14 @@ async function createPeerConnection(peerId, peerName) {
                 canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`);
             }
             canvases[canvasId].streamId = streamId;
-            updateRemotePeerDisplay(peerId); // Update display name with mute state
+            
+            // Check for initial mute state based on audio track enabled status
+            if (event.track.kind === 'audio' && remotePeers[peerId]) {
+                const isAudioEnabled = event.track.enabled;
+                remotePeers[peerId].isMuted = !isAudioEnabled;
+                // Update display to reflect actual mute state
+                updateRemotePeerDisplay(peerId);
+            }
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
