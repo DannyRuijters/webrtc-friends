@@ -30,8 +30,7 @@ function toggleMute() {
 function updateMuteButton(disabled = false) {
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {
-        muteBtn.textContent = isMuted ? '\u{1F507}' : '&#127908;';
-        muteBtn.style.backgroundColor = isMuted ? '#ff4444' : '';
+        muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';
         muteBtn.title = isMuted ? 'Unmute microphone' : 'Mute microphone';
         muteBtn.disabled = disabled;
     }
