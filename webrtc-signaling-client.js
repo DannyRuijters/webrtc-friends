@@ -146,6 +146,13 @@ async function handleSignalingMessage(message) {
                         createAndSendOffer(peerId, peerName);
                     }, 1000);
                 }
+                
+                // If we are screen sharing, send a renegotiation offer to include screen share
+                if (screenShareStream && peerConnections[peerId]) {
+                    setTimeout(() => {
+                        sendRenegotiationOffer(peerId);
+                    }, 2000);
+                }
             }
             break;
             
@@ -375,6 +382,14 @@ async function handleOffer(offer, senderId, peerName) {
         } else if (pc.signalingState === 'have-local-offer') {
             // Rollback local offer for glare handling
             await pc.setLocalDescription({ type: 'rollback' });
+        }
+        
+        // Ensure screen share tracks are added for new peer connections
+        if (screenShareStream && !screenShareSenders[senderId]) {
+            screenShareStream.getTracks().forEach(track => {
+                const sender = pc.addTrack(track, screenShareStream);
+                screenShareSenders[senderId] = sender;
+            });
         }
         
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
