@@ -14,7 +14,7 @@ function toggleMute() {
         track.enabled = !isMuted;
     });
     
-    updateMuteButton();
+    updateButtonState();
     updateLocalPeerDisplay();
     
     // Send mute state to other peers
@@ -27,7 +27,13 @@ function toggleMute() {
     console.log(`Audio ${isMuted ? 'muted' : 'unmuted'}`);
 }
 
-function updateMuteButton(disabled = false) {
+function updateButtonState(disabled = false) {
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) { 
+        shareBtn.disabled = disabled || !isScreenShareSupported();
+        if (shareBtn.disabled) { shareBtn.textContent = 'Share'; }
+    }
+
     const muteBtn = document.getElementById('muteBtn');
     if (muteBtn) {
         muteBtn.textContent = isMuted ? 'Unmute' : 'Mute';

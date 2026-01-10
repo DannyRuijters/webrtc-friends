@@ -130,25 +130,10 @@ function isScreenShareSupported() {
     return navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function';
 }
 
-function initShareButton() {
-    const btn = document.getElementById('shareBtn');
-    if (btn && !isScreenShareSupported()) {
-        btn.disabled = true;
-        console.log('Screen sharing not supported - Share button disabled');
-    }
-}
-
 function updateShareButton(isSharing) {
     const btn = document.getElementById('shareBtn');
     if (btn) {
         btn.textContent = isSharing ? 'Stop Share' : 'Share';
         btn.classList.toggle('sharing', isSharing);
     }
-}
-
-// Initialize share button state when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initShareButton);
-} else {
-    initShareButton();
 }

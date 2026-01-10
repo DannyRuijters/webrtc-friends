@@ -83,7 +83,7 @@ function connectToSignalingServer() {
             updateConnectionButton(false);
             document.getElementById('chatInput').disabled = true;
             document.getElementById('sendChatBtn').disabled = true;
-            updateMuteButton(true);
+            updateButtonState(true);
             chatEnabled = false;
             signalingSocket = null;
             myClientId = null;
@@ -108,7 +108,7 @@ function disconnectFromServer() {
     
     // Reset mute state and disable button
     isMuted = false;
-    updateMuteButton(true);
+    updateButtonState(true);
     
     peerMeta = {};
     console.log('Disconnected from server');
@@ -171,7 +171,7 @@ function handleWelcome(message) {
     chatEnabled = true;
     document.getElementById('chatInput').disabled = false;
     document.getElementById('sendChatBtn').disabled = false;
-    updateMuteButton(false);
+    updateButtonState(false);
     updateLocalPeerDisplay();
 }
 
