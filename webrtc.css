@@ -14,16 +14,16 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f0
 }
 .video-box h3 { margin: 0; color: white; position: absolute; top: 10px; left: 10px; z-index: 10;
     background: rgba(0, 0, 0, 0.5); padding: 8px 12px; border-radius: 4px;
-    font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    font-size: 16px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 canvas { border-radius: 8px; display: block; object-fit: cover; width: 100%; flex: 1; min-height: 0; margin: 0; box-sizing: border-box; }
 .controls { background: white; padding: 4px 10px 4px; border-radius: 8px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px; 
 }
-.controls-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.controls-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .input-group { display: flex; align-items: center; gap: 5px; margin: 0; }
 .input-group label { display: inline-block; width: auto; font-weight: bold; white-space: nowrap; }
-button { padding: 5px 2px; margin: 2px; font-size: 12px; cursor: pointer; background: #5d81cf;
+button { padding: 10px 20px; margin: 5px; font-size: 14px; cursor: pointer; background: #5d81cf;
     color: white; border: none; border-radius: 4px; transition: background 0.3s;
 }
 button:hover { background: #4a53a7; }
@@ -35,7 +35,7 @@ button:disabled { background: #cccccc; cursor: not-allowed; }
 #connectionBtn.disconnect:hover { background: #da190b; }
 #shareBtn.sharing { background: #f44336; }
 #shareBtn.sharing:hover { background: #da190b; }
-input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .chat-container { background: white; padding: 10px 20px 20px; border-radius: 8px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-top: 0; margin-bottom: 0; position: relative; 
     width: 100%; box-sizing: border-box; 
