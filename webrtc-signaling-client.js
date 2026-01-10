@@ -297,6 +297,7 @@ async function createPeerConnection(peerId, peerName) {
                 canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`);
             }
             canvases[canvasId].streamId = streamId;
+            updateRemotePeerDisplay(peerId);
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
