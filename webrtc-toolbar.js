@@ -37,14 +37,11 @@ function updateMuteButton(disabled = false) {
 }
 
 function updateLocalPeerDisplay() {
-    const mutedSuffix = isMuted ? ' (muted)' : '';
-    const displayName = `${myName}${mutedSuffix}`;
-    
     // Update local canvas
     if (canvases['localVideo']) {
         const peerInfo = canvases['localVideo'].container.querySelector('.peer-info');
         if (peerInfo) {
-            peerInfo.textContent = displayName;
+            peerInfo.textContent = isMuted ? 'You (muted)' : 'You';
         }
     }
 }
