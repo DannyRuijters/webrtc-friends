@@ -97,7 +97,8 @@ function validateConnectionButton() {
 
 function createLink() {
     // copy to clipboard
-    const link = `${window.location.origin}${window.location.pathname}?roomid=${encodeURIComponent(roomId)}`;
+    const enteredRoomId = document.getElementById('roomId').value.trim();
+    const link = `${window.location.origin}${window.location.pathname}?roomid=${encodeURIComponent(enteredRoomId)}`;
     navigator.clipboard.writeText(link).then(() => {
         console.log('Link copied to clipboard');
         alert('Call link copied to clipboard: ' + link);
