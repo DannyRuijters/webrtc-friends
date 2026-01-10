@@ -27,20 +27,6 @@ function updatePeerMeta(peerId, name, isMuted) {
     peerMeta[peerId] = { name: name || `Peer-${peerId}`, isMuted: isMuted || false };
 }
 
-function addScreenShareTracks(pc, peerId) {
-    if (!screenShareStream) return;
-    
-    screenShareStream.getTracks().forEach(track => {
-        const existingTrack = pc.getSenders().find(sender => sender.track === track);
-        if (!existingTrack) {
-            const sender = pc.addTrack(track, screenShareStream);
-            if (!screenShareSenders[peerId]) {
-                screenShareSenders[peerId] = sender;
-            }
-        }
-    });
-}
-
 function createSignalingMessage(type, data = {}) {
     return {
         type,
@@ -131,24 +117,41 @@ function disconnectFromServer() {
 async function handleSignalingMessage(message) {
     console.log('Received signaling message:', message.type);
     
-    const handlers = {
-        'welcome': handleWelcome,
-        'room-redirect': handleRoomRedirect,
-        'peer-connected': handlePeerConnected,
-        'peer-disconnected': handlePeerDisconnected,
-        'offer': handleOfferMessage,
-        'answer': handleAnswerMessage,
-        'ice-candidate': handleIceCandidate,
-        'chat': handleChatMessage,
-        'mute-state': handleMuteState,
-        'screen-share-stopped': handleScreenShareStopped
-    };
-    
-    const handler = handlers[message.type];
-    if (handler) {
-        await handler(message);
-    } else {
-        console.warn('Unknown message type:', message.type);
+    switch (message.type) {
+        case 'welcome': handleWelcome(message); break;
+        case 'room-redirect': alert(message.message); break;
+        case 'peer-connected': await handlePeerConnected(message); break;
+        case 'peer-disconnected': handlePeerDisconnected(message); break;
+        case 'offer':
+            updatePeerMeta(message.senderId, message.peerName, message.isMuted);
+            await handleOffer(message.offer, message.senderId, peerMeta[message.senderId].name);
+            break;
+        case 'answer':
+            if (message.peerName) { updatePeerMeta(message.senderId, message.peerName, message.isMuted); }
+            await handleAnswer(message.answer, message.senderId);
+            break;
+        case 'ice-candidate':
+            if (message.candidate && peerConnections[message.senderId]) {
+                await peerConnections[message.senderId].addIceCandidate(new RTCIceCandidate(message.candidate));
+            }
+            break;
+        case 'chat':
+            const senderName = message.senderName || `Client ${message.senderId}`;
+            displayChatMessage(message.text, senderName, false, message.timestamp);
+            break;
+        case 'mute-state':
+            if (peerMeta[message.senderId]) {
+                peerMeta[message.senderId].isMuted = message.isMuted;
+                updateRemotePeerDisplay(message.senderId);
+            }
+            break;
+        case 'screen-share-stopped':
+            const screenCanvasId = `remote-${message.senderId}-screen`;
+            if (canvases[screenCanvasId]) { removeVideoCanvas(screenCanvasId); }
+            break;
+        default:
+            console.warn('Unknown message type:', message.type);
+            break;
     }
 }
 
@@ -160,7 +163,6 @@ function handleWelcome(message) {
     }
     
     console.log(`You are "${myName}" (Client ${myClientId}) in room "${roomId}"`);
-    
     const localPeerInfo = document.getElementById('localVideoPeerInfo');
     if (localPeerInfo) {
         localPeerInfo.textContent = `${myName} (ID: ${myClientId}) - Room: ${roomId}`;
@@ -173,10 +175,6 @@ function handleWelcome(message) {
     updateLocalPeerDisplay();
 }
 
-function handleRoomRedirect(message) {
-    alert(message.message);
-}
-
 async function handlePeerConnected(message) {
     if (message.clientId === myClientId) return;
     
@@ -184,7 +182,6 @@ async function handlePeerConnected(message) {
     updatePeerMeta(peerId, peerName, isMuted);
     
     console.log(`"${peerMeta[peerId].name}" (Client ${peerId}) joined room "${roomId}"`);
-    
     // Auto-call if we have local stream
     if (localStream && !peerConnections[peerId]) {
         setTimeout(() => createAndSendOffer(peerId, peerMeta[peerId].name), 1000);
@@ -203,43 +200,6 @@ function handlePeerDisconnected(message) {
         delete peerConnections[peerId];
         delete screenShareSenders[peerId];
         delete peerMeta[peerId];
-    }
-}
-
-async function handleOfferMessage(message) {
-    updatePeerMeta(message.senderId, message.peerName, message.isMuted);
-    await handleOffer(message.offer, message.senderId, peerMeta[message.senderId].name);
-}
-
-async function handleAnswerMessage(message) {
-    if (message.peerName) {
-        updatePeerMeta(message.senderId, message.peerName, message.isMuted);
-    }
-    await handleAnswer(message.answer, message.senderId);
-}
-
-async function handleIceCandidate(message) {
-    if (message.candidate && peerConnections[message.senderId]) {
-        await peerConnections[message.senderId].addIceCandidate(new RTCIceCandidate(message.candidate));
-    }
-}
-
-function handleChatMessage(message) {
-    const senderName = message.senderName || `Client ${message.senderId}`;
-    displayChatMessage(message.text, senderName, false, message.timestamp);
-}
-
-function handleMuteState(message) {
-    if (peerMeta[message.senderId]) {
-        peerMeta[message.senderId].isMuted = message.isMuted;
-        updateRemotePeerDisplay(message.senderId);
-    }
-}
-
-function handleScreenShareStopped(message) {
-    const screenCanvasId = `remote-${message.senderId}-screen`;
-    if (canvases[screenCanvasId]) {
-        removeVideoCanvas(screenCanvasId);
     }
 }
 
@@ -281,7 +241,12 @@ async function createPeerConnection(peerId, peerName) {
     }
     
     // Add screen share tracks
-    addScreenShareTracks(pc, peerId);
+    if (screenShareStream) {
+        screenShareStream.getTracks().forEach(track => {
+            const existingTrack = pc.getSenders().find(sender => sender.track === track);
+            if (!existingTrack) { screenShareSenders[peerId] = pc.addTrack(track, screenShareStream); }
+        });
+    }
     
     // Setup event handlers
     setupPeerConnectionHandlers(pc, peerId, peerName);
@@ -316,9 +281,7 @@ function handleIncomingTrack(event, peerId, peerName) {
     
     const streamId = stream.id;
     const existingCanvas = canvases[`remote-${peerId}`];
-    const isScreenShare = event.track.kind === 'video' && 
-        existingCanvas?.streamId && existingCanvas.streamId !== streamId;
-    
+    const isScreenShare = event.track.kind === 'video' && existingCanvas?.streamId && existingCanvas.streamId !== streamId;
     const canvasId = isScreenShare ? `remote-${peerId}-screen` : `remote-${peerId}`;
     const displayName = isScreenShare ? 
         `${peerName || `Peer ${peerId}`} (Screen)` : 
@@ -345,19 +308,9 @@ function handleIncomingTrack(event, peerId, peerName) {
 async function createAndSendOffer(targetId, peerName) {
     try {
         const pc = await createPeerConnection(targetId, peerName);
-        
-        // Screen share tracks are already added in createPeerConnection
-        // but ensure they're added if connection was created earlier
-        addScreenShareTracks(pc, targetId);
-        
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        
-        sendSignalingMessage(createSignalingMessage('offer', {
-            offer: offer,
-            targetId: targetId
-        }));
-        
+        sendSignalingMessage(createSignalingMessage('offer', { offer: offer, targetId: targetId }));
         console.log(`Sent offer to "${peerName}" (Client ${targetId})`);
     } catch (error) {
         console.error("Error creating offer:", error);
@@ -389,9 +342,6 @@ async function handleOffer(offer, senderId, peerName) {
             // Rollback local offer for glare handling
             await pc.setLocalDescription({ type: 'rollback' });
         }
-        
-        // Ensure screen share tracks are added
-        addScreenShareTracks(pc, senderId);
         
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         const answer = await pc.createAnswer();
