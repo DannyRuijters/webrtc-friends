@@ -44,11 +44,13 @@ client_id_counter = 0
 
 
 class ConnectionManager:
-    def __init__(self):
+    def __init__(self, max_peers_per_room=32):
         self.active_connections: Dict[int, WebSocket] = {}
         self.client_names: Dict[int, str] = {}
         self.client_rooms: Dict[int, str] = {}
+        self.client_ips: Dict[int, str] = {}
         self.client_counter = 0
+        self.max_peers_per_room = max_peers_per_room
 
     def disconnect(self, client_id: int):
         if client_id in self.active_connections:
@@ -57,11 +59,68 @@ class ConnectionManager:
                 del self.client_names[client_id]
             if client_id in self.client_rooms:
                 del self.client_rooms[client_id]
+            if client_id in self.client_ips:
+                del self.client_ips[client_id]
             logger.info(f"Client {client_id} disconnected. Total clients: {len(self.active_connections)}")
+
+    def register_client(self, client_id: int, room_id: str, websocket: WebSocket, ip_address: str, peer_name: str = None):
+        """Register a client with IP address tracking"""
+        self.active_connections[client_id] = websocket
+        self.client_ips[client_id] = ip_address
+        self.client_rooms[client_id] = room_id
+        if peer_name:
+            self.client_names[client_id] = peer_name
+            
 
     def get_peers_in_room(self, room_id: str) -> list:
         """Get list of client IDs in the specified room"""
         return [cid for cid, rid in self.client_rooms.items() if rid == room_id]
+
+    def get_rooms_info(self) -> dict:
+        """Get information about all rooms and their peers including IP addresses"""
+        rooms = {}
+        for client_id, room_id in self.client_rooms.items():
+            if room_id not in rooms:
+                rooms[room_id] = {
+                    'peers': [],
+                    'count': 0,
+                    'max_peers': self.max_peers_per_room
+                }
+            
+            peer_name = self.client_names.get(client_id, f"Client-{client_id}")
+            peer_ip = self.client_ips.get(client_id, "Unknown")
+            rooms[room_id]['peers'].append({
+                'id': client_id,
+                'name': peer_name,
+                'ip': peer_ip
+            })
+            rooms[room_id]['count'] = len(rooms[room_id]['peers'])
+        
+        return {
+            'total_clients': len(self.active_connections),
+            'total_rooms': len(rooms),
+            'rooms': rooms
+        }
+
+    def find_available_room(self, requested_room: str) -> tuple[str, bool]:
+        """Find an available room, creating overflow rooms if needed.
+        
+        Returns:
+            tuple: (actual_room_id, was_redirected)
+        """
+        # Check the original room first
+        peers_in_room = len(self.get_peers_in_room(requested_room))
+        if peers_in_room < self.max_peers_per_room:
+            return (requested_room, False)
+        
+        # Original room is full, find or create an overflow room
+        overflow_index = 1
+        while True:
+            overflow_room = f"{requested_room}_{overflow_index}"
+            peers_in_overflow = len(self.get_peers_in_room(overflow_room))
+            if peers_in_overflow < self.max_peers_per_room:
+                return (overflow_room, True)
+            overflow_index += 1
 
     async def send_personal_message(self, message: dict, client_id: int):
         if client_id in self.active_connections:
@@ -88,7 +147,15 @@ class ConnectionManager:
             self.disconnect(client_id)
 
 
-manager = ConnectionManager()
+@app.get("/api/rooms")
+async def get_rooms():
+    """API endpoint to get information about all rooms and peers including IP addresses"""
+    try:
+        rooms_info = manager.get_rooms_info()
+        return rooms_info
+    except Exception as e:
+        logger.error(f"Error getting rooms info: {e}")
+        return {"error": "Internal server error"}
 
 
 @app.get("/")
@@ -148,31 +215,46 @@ async def websocket_endpoint(websocket: WebSocket):
         # Accept connection first
         await websocket.accept()
         
+        # Get client IP address
+        client_ip = websocket.client.host if websocket.client else "Unknown"
+        
         # Wait for first message which must contain peer name and room ID
         first_data = await websocket.receive_json()
         peer_name = first_data.get("peerName") or first_data.get("name")
-        room_id = first_data.get("roomId") or "default"
+        requested_room = first_data.get("roomId") or "default"
+        
+        # Find available room (may redirect to overflow room if original is full)
+        room_id, was_redirected = manager.find_available_room(requested_room)
         
         # Now register the client
         manager.client_counter += 1
         client_id = manager.client_counter
-        manager.active_connections[client_id] = websocket
-        if peer_name:
-            manager.client_names[client_id] = peer_name
-        manager.client_rooms[client_id] = room_id
-        
+        manager.register_client(client_id, room_id, websocket, client_ip, peer_name)
         peers_in_room = manager.get_peers_in_room(room_id)
         peers_count = len(peers_in_room) - 1  # Exclude self
         
-        logger.info(f"Client {client_id} ('{peer_name or 'Unnamed'}') joined room '{room_id}'. Peers in room: {peers_count}")
+        if was_redirected:
+            logger.info(f"Client {client_id} ('{peer_name or 'Unnamed'}') redirected from '{requested_room}' to overflow room '{room_id}'. Peers in room: {peers_count}")
+        else:
+            logger.info(f"Client {client_id} ('{peer_name or 'Unnamed'}') joined room '{room_id}'. Peers in room: {peers_count}")
         
         # Send welcome message
         await websocket.send_json({
             "type": "welcome",
             "clientId": client_id,
             "totalClients": len(manager.active_connections),
-            "peersInRoom": peers_count
+            "peersInRoom": peers_count,
+            "roomId": room_id
         })
+        
+        # Send notification if peer was redirected to an overflow room
+        if was_redirected:
+            await websocket.send_json({
+                "type": "room-redirect",
+                "message": f"Room '{requested_room}' is full (max {manager.max_peers_per_room} peers). You have been placed in overflow room '{room_id}'.",
+                "originalRoom": requested_room,
+                "assignedRoom": room_id
+            })
         
         # Broadcast to other clients IN THE SAME ROOM only
         await manager.broadcast({
@@ -312,7 +394,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WebRTC Signaling Server")
     parser.add_argument("--port", type=int, default=8080, help="Port to listen on (default: 8080)")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
+    parser.add_argument("--max-peers", type=int, default=32, help="Maximum number of peers per room (default: 32)")
     args = parser.parse_args()
+    
+    # Initialize connection manager with max peers setting
+    global manager
+    manager = ConnectionManager(max_peers_per_room=args.max_peers)
     
     # Setup signal handlers for graceful shutdown
     signal.signal(signal.SIGTERM, signal_handler)
@@ -323,6 +410,7 @@ if __name__ == "__main__":
     print("========================================")
     print(f"WebSocket server listening on port {args.port}")
     print(f"ws://{args.host}:{args.port}")
+    print(f"Max peers per room: {args.max_peers}")
     print("========================================\n")
     
     uvicorn.run(

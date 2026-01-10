@@ -99,6 +99,11 @@ async function handleSignalingMessage(message) {
     switch (message.type) {
         case 'welcome':
             myClientId = message.clientId;
+            // Update roomId if server assigned a different room (due to overflow)
+            if (message.roomId) {
+                roomId = message.roomId;
+                document.getElementById('roomId').value = roomId;
+            }
             const peersInRoom = message.peersInRoom || (message.totalClients - 1);
             console.log(`You are "${myName}" (Client ${myClientId}) in room "${roomId}"`);
             // Update local peer info if canvas exists
@@ -109,6 +114,11 @@ async function handleSignalingMessage(message) {
             chatEnabled = true;
             document.getElementById('chatInput').disabled = false;
             document.getElementById('sendChatBtn').disabled = false;
+            break;
+            
+        case 'room-redirect':
+            // Display alert notification that user was redirected to an overflow room
+            alert(message.message);
             break;
             
         case 'peer-connected':
