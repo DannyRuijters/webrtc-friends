@@ -278,14 +278,14 @@ function setupPeerConnectionHandlers(pc, peerId, peerName) {
 function handleIncomingTrack(event, peerId, peerName) {
     const stream = event.streams[0];
     if (!stream) return;
+    alert('test');
     
     const streamId = stream.id;
     const existingCanvas = canvases[`remote-${peerId}`];
     const isScreenShare = event.track.kind === 'video' && existingCanvas?.streamId && existingCanvas.streamId !== streamId;
     const canvasId = isScreenShare ? `remote-${peerId}-screen` : `remote-${peerId}`;
-    const displayName = isScreenShare ? 
-        `${peerName || `Peer ${peerId}`} (Screen)` : 
-        (peerName || `Peer ${peerId}`);
+    const displayName = isScreenShare ? `${peerName || `Peer ${peerId}`} (Screen)` : (peerName || `Peer ${peerId}`);
+    alert(displayName);
     
     if (!canvases[canvasId]) {
         canvases[canvasId] = createVideoCanvas(canvasId, displayName);
