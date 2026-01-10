@@ -281,7 +281,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     logger.info(f"  ✗ Target client {target_id} is not in the same room")
         
         # Continue with regular message loop
-        # Continue with regular message loop
         while True:
             # Receive message from client
             data = await websocket.receive_json()
