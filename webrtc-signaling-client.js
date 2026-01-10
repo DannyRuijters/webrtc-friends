@@ -227,7 +227,8 @@ async function sendRenegotiationOffer(peerId) {
             offer: offer,
             targetId: peerId,
             peerName: myName,
-            roomId: roomId
+            roomId: roomId,
+            isMuted: isMuted
         });
         return true;
     } catch (error) {
@@ -384,7 +385,8 @@ async function handleOffer(offer, senderId, peerName) {
             answer: answer,
             targetId: senderId,
             peerName: myName,
-            roomId: roomId
+            roomId: roomId,
+            isMuted: isMuted
         });
     } catch (error) {
         console.error("Error handling offer:", error);
