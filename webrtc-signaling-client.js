@@ -189,11 +189,6 @@ async function handlePeerConnected(message) {
     if (localStream && !peerConnections[peerId]) {
         setTimeout(() => createAndSendOffer(peerId, peerMeta[peerId].name), 1000);
     }
-    
-    // Send screen share if active
-    if (screenShareStream && peerConnections[peerId]) {
-        setTimeout(() => sendRenegotiationOffer(peerId), 2000);
-    }
 }
 
 function handlePeerDisconnected(message) {
