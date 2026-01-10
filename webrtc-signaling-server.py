@@ -18,7 +18,7 @@ import logging
 import signal
 import sys, os, argparse
 from datetime import datetime
-from typing import Dict, Set, List
+from typing import Dict, List, Tuple
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
@@ -101,7 +101,7 @@ class ConnectionManager:
             'rooms': rooms
         }
 
-    def find_available_room(self, requested_room: str) -> tuple[str, bool]:
+    def find_available_room(self, requested_room: str) -> Tuple[str, bool]:
         """Find an available room, creating overflow rooms if needed.
         
         Returns:
