@@ -17,6 +17,7 @@ function createVideoCanvas(canvasId, title, mirror = false) {
     
     // Create title overlay
     const h3 = document.createElement('h3');
+    h3.className = 'peer-info';
     h3.textContent = title;
     container.appendChild(h3);
    
