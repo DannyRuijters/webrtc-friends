@@ -246,11 +246,6 @@ async function createPeerConnection(peerId, peerName) {
     }
     
     // Setup event handlers
-    setupPeerConnectionHandlers(pc, peerId, peerName);
-    return pc;
-}
-
-function setupPeerConnectionHandlers(pc, peerId, peerName) {
     pc.ontrack = (event) => handleIncomingTrack(event, peerId, peerName);
     
     pc.onicecandidate = (event) => {
@@ -269,6 +264,8 @@ function setupPeerConnectionHandlers(pc, peerId, peerName) {
             console.error(`Connection with peer ${peerId} ${pc.connectionState}`);
         }
     };
+
+    return pc;
 }
 
 function handleIncomingTrack(event, peerId, peerName) {
@@ -280,7 +277,6 @@ function handleIncomingTrack(event, peerId, peerName) {
     const isScreenShare = event.track.kind === 'video' && existingCanvas?.streamId && existingCanvas.streamId !== streamId;
     const canvasId = isScreenShare ? `remote-${peerId}-screen` : `remote-${peerId}`;
     const displayName = isScreenShare ? `${peerName || `Peer ${peerId}`} (Screen)` : (peerName || `Peer ${peerId}`);
-    alert(displayName);
     
     if (!canvases[canvasId]) {
         canvases[canvasId] = createVideoCanvas(canvasId, displayName);
@@ -317,11 +313,6 @@ async function handleAnswer(answer, peerId) {
     if (!pc) return;
     
     try {
-        // Allow answers with more tracks than the offer by handling negotiation needed events
-        pc.onnegotiationneeded = async () => {
-            if (pc.signalingState === 'stable') { await sendRenegotiationOffer(peerId); }
-        };
-        
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (error) {
         console.error("Error handling answer:", error);
@@ -345,10 +336,7 @@ async function handleOffer(offer, senderId, peerName) {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         
-        sendSignalingMessage(createSignalingMessage('answer', {
-            answer: answer,
-            targetId: senderId
-        }));
+        sendSignalingMessage(createSignalingMessage('answer', { answer: answer, targetId: senderId }));
     } catch (error) {
         console.error("Error handling offer:", error);
     }
