@@ -18,7 +18,7 @@ import logging
 import signal
 import sys, os, argparse
 from datetime import datetime
-from typing import Dict, Set
+from typing import Dict, Set, List
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import PlainTextResponse
@@ -70,9 +70,8 @@ class ConnectionManager:
         self.client_rooms[client_id] = room_id
         if peer_name:
             self.client_names[client_id] = peer_name
-            
 
-    def get_peers_in_room(self, room_id: str) -> list:
+    def get_peers_in_room(self, room_id: str) -> List:
         """Get list of client IDs in the specified room"""
         return [cid for cid, rid in self.client_rooms.items() if rid == room_id]
 
