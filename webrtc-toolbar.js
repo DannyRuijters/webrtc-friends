@@ -103,7 +103,7 @@ function createLink() {
     const link = `${window.location.origin}${window.location.pathname}?roomid=${encodeURIComponent(enteredRoomId)}`;
     navigator.clipboard.writeText(link).then(() => {
         console.log('Link copied to clipboard');
-        alert('Call link copied to clipboard: ' + link);
+        alert('Call link copied to clipboard:\n' + link + '\nShare it with others to invite them to the call.');
     }).catch(err => {
         console.error('Failed to copy link: ', err);
     });
