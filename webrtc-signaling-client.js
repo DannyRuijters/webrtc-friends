@@ -242,15 +242,11 @@ async function createPeerConnection(peerId, peerName) {
     
     // Add screen share tracks
     if (screenShareStream) {
-        screenShareStream.getTracks().forEach(track => {
-            const existingTrack = pc.getSenders().find(sender => sender.track === track);
-            if (!existingTrack) { screenShareSenders[peerId] = pc.addTrack(track, screenShareStream); }
-        });
+        screenShareStream.getTracks().forEach(track => pc.addTrack(track, screenShareStream));
     }
     
     // Setup event handlers
     setupPeerConnectionHandlers(pc, peerId, peerName);
-    
     return pc;
 }
 
@@ -278,7 +274,6 @@ function setupPeerConnectionHandlers(pc, peerId, peerName) {
 function handleIncomingTrack(event, peerId, peerName) {
     const stream = event.streams[0];
     if (!stream) return;
-    alert('test');
     
     const streamId = stream.id;
     const existingCanvas = canvases[`remote-${peerId}`];
