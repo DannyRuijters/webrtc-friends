@@ -4,12 +4,12 @@
 
 let localStream = null;
 let peerConnections = {}; // Track peer connections by peer ID
+let peerMeta = {}; // Track remote peers meta data: { peerId: { name: 'name', isMuted: false, ... } }
 let canvases = {}; // Track canvases by id: { local: {canvas, container}, remote-{peerId}: {canvas, container} }
 let signalingSocket = null;
 let myClientId = null;
 let myName = '';
 let roomId = '';
-let remotePeers = {}; // Track remote peers: { peerId: { name: 'name', isMuted: false, ... } }
 let chatEnabled = false;
 let isMuted = false;
 
@@ -95,7 +95,7 @@ function disconnectFromServer() {
     isMuted = false;
     updateMuteButton(true);
     
-    remotePeers = {};
+    peerMeta = {};
     console.log('Disconnected from server');
 }
 
@@ -137,7 +137,7 @@ async function handleSignalingMessage(message) {
                 const isMuted = message.isMuted;
                 
                 // Track the new peer with mute state
-                remotePeers[peerId] = { name: peerName, isMuted: isMuted };
+                peerMeta[peerId] = { name: peerName, isMuted: isMuted };
                 console.log(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
                 
                 // If we have local stream and no existing connection to this peer, automatically call
@@ -153,7 +153,7 @@ async function handleSignalingMessage(message) {
             const disconnectedPeerId = message.clientId;
             console.log(`Peer ${disconnectedPeerId} disconnected`);
             
-            if (remotePeers[disconnectedPeerId]) {
+            if (peerMeta[disconnectedPeerId]) {
                 // Remove remote canvases for this peer (camera and screen share)
                 removeVideoCanvas(`remote-${disconnectedPeerId}`);
                 removeVideoCanvas(`remote-${disconnectedPeerId}-screen`);
@@ -162,19 +162,19 @@ async function handleSignalingMessage(message) {
                 peerConnections[disconnectedPeerId]?.close();
                 delete peerConnections[disconnectedPeerId];
                 delete screenShareSenders[disconnectedPeerId];
-                delete remotePeers[disconnectedPeerId];
+                delete peerMeta[disconnectedPeerId];
             }
             break;
             
         case 'offer':
             const peerNameOffer = message.peerName || `Peer-${message.senderId}`;
-            remotePeers[message.senderId] = { name: peerNameOffer, isMuted: message.isMuted };
+            peerMeta[message.senderId] = { name: peerNameOffer, isMuted: message.isMuted };
             await handleOffer(message.offer, message.senderId, peerNameOffer);
             break;
             
         case 'answer':
-            const peerNameAnswer = message.peerName || remotePeers[message.senderId]?.name || `Peer-${message.senderId}`;
-            if (message.peerName) remotePeers[message.senderId] = { name: peerNameAnswer, isMuted: message.isMuted };
+            const peerNameAnswer = message.peerName || peerMeta[message.senderId]?.name || `Peer-${message.senderId}`;
+            if (message.peerName) peerMeta[message.senderId] = { name: peerNameAnswer, isMuted: message.isMuted };
             await handleAnswer(message.answer, message.senderId);
             break;
             
@@ -190,8 +190,8 @@ async function handleSignalingMessage(message) {
             break;
             
         case 'mute-state':
-            if (remotePeers[message.senderId]) {
-                remotePeers[message.senderId].isMuted = message.isMuted;
+            if (peerMeta[message.senderId]) {
+                peerMeta[message.senderId].isMuted = message.isMuted;
                 updateRemotePeerDisplay(message.senderId);
             }
             break;

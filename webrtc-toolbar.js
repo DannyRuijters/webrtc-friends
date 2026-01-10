@@ -47,7 +47,7 @@ function updateLocalPeerDisplay() {
 }
 
 function updateRemotePeerDisplay(peerId) {
-    const peer = remotePeers[peerId];
+    const peer = peerMeta[peerId];
     if (!peer) return;
     
     const mutedSuffix = peer.isMuted ? ' (muted)' : '';
