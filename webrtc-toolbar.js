@@ -37,10 +37,15 @@ function updateMuteButton(disabled = false) {
 }
 
 function updateLocalPeerDisplay() {
-    const localPeerInfo = document.getElementById('localVideoPeerInfo');
-    if (localPeerInfo) {
-        const mutedSuffix = isMuted ? ' (muted)' : '';
-        localPeerInfo.textContent = `${myName}${mutedSuffix} (ID: ${myClientId}) - Room: ${roomId}`;
+    const mutedSuffix = isMuted ? ' (muted)' : '';
+    const displayName = `${myName}${mutedSuffix}`;
+    
+    // Update local canvas
+    if (canvases['localVideo']) {
+        const peerInfo = canvases['localVideo'].container.querySelector('.peer-info');
+        if (peerInfo) {
+            peerInfo.textContent = displayName;
+        }
     }
 }
 
