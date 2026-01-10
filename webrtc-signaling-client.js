@@ -139,6 +139,16 @@ async function handleSignalingMessage(message) {
                 remotePeers[peerId] = { name: peerName, isMuted: false };
                 console.log(`"${peerName}" (Client ${peerId}) joined room "${roomId}". Peers in room: ${peersInRoom}`);
                 
+                // Send our current mute state to the new peer
+                if (typeof isMuted !== 'undefined') {
+                    sendSignalingMessage({
+                        type: 'mute-state',
+                        isMuted: isMuted,
+                        targetId: peerId,
+                        roomId: roomId
+                    });
+                }
+                
                 // If we have local stream and no existing connection to this peer, automatically call
                 if (localStream && !peerConnections[peerId]) {
                     setTimeout(() => {
@@ -189,9 +199,12 @@ async function handleSignalingMessage(message) {
             break;
             
         case 'mute-state':
-            if (remotePeers[message.senderId]) {
-                remotePeers[message.senderId].isMuted = message.isMuted;
-                updateRemotePeerDisplay(message.senderId);
+            // Only process if the message is for us (targeted) or broadcast to all
+            if (!message.targetId || message.targetId === myClientId) {
+                if (remotePeers[message.senderId]) {
+                    remotePeers[message.senderId].isMuted = message.isMuted;
+                    updateRemotePeerDisplay(message.senderId);
+                }
             }
             break;
             
@@ -295,14 +308,6 @@ async function createPeerConnection(peerId, peerName) {
                 canvases[canvasId] = createVideoCanvas(canvasId, peerName || `Peer ${peerId}`);
             }
             canvases[canvasId].streamId = streamId;
-            
-            // Check for initial mute state based on audio track enabled status
-            if (event.track.kind === 'audio' && remotePeers[peerId]) {
-                const isAudioEnabled = event.track.enabled;
-                remotePeers[peerId].isMuted = !isAudioEnabled;
-                // Update display to reflect actual mute state
-                updateRemotePeerDisplay(peerId);
-            }
         }
         
         const remoteCanvas = canvases[canvasId].canvas;
