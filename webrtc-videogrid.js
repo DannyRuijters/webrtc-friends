@@ -47,15 +47,7 @@ function removeVideoCanvas(canvasId) {
 function rebalanceVideoGrid() {
     const numCanvases = Object.keys(canvases).length;
     if (numCanvases === 0) return;
-    const shouldUseOverlay = numCanvases > 1 && numCanvases <= 5;
-    
-    // Handle local video as overlay when appropriate
-    const localCanvas = canvases['localVideo'];
-    if (localCanvas && shouldUseOverlay) {
-        makeLocalVideoOverlay(localCanvas);
-    } else if (localCanvas) {
-        removeLocalVideoOverlay(localCanvas);
-    }
+    let shouldUseOverlay = numCanvases > 1 && numCanvases <= 5;
     
     // Defer measurement until after layout reflow
     requestAnimationFrame(() => {
@@ -71,7 +63,7 @@ function rebalanceVideoGrid() {
         const availableHeight = rect.height || (window.innerHeight - 200);
 
         // Count canvases that should participate in the grid (exclude overlay local video)
-        const gridCanvases = Object.entries(canvases).filter(([id, data]) => { return !(shouldUseOverlay && id === 'localVideo'); });
+        let gridCanvases = Object.entries(canvases).filter(([id, data]) => { return !(shouldUseOverlay && id === 'localVideo'); });
         const numGridCanvases = gridCanvases.length;
         if (numGridCanvases === 0) return;
 
@@ -80,6 +72,19 @@ function rebalanceVideoGrid() {
         numRows = Math.ceil(numGridCanvases / canvasesPerRow); // Recalculate rows based on canvases per row to avoid wasting space
         const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow);
         const maxHeight = Math.floor((availableHeight - (numRows-1) * gapSize) / numRows);
+
+        if (numRows * canvasesPerRow > numGridCanvases && shouldUseOverlay) {
+            shouldUseOverlay = false; // Disable overlay if it would leave empty grid spots
+            gridCanvases = Object.entries(canvases); // Re-include local video
+        }
+
+        // Handle local video as overlay when appropriate
+        const localCanvas = canvases['localVideo'];
+        if (localCanvas && shouldUseOverlay) {
+            makeLocalVideoOverlay(localCanvas);
+        } else if (localCanvas) {
+            removeLocalVideoOverlay(localCanvas);
+        }
 
         // Apply size to grid canvases only
         gridCanvases.forEach(([id, { container, canvas }]) => {
