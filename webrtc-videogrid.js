@@ -47,6 +47,15 @@ function removeVideoCanvas(canvasId) {
 function rebalanceVideoGrid() {
     const numCanvases = Object.keys(canvases).length;
     if (numCanvases === 0) return;
+    const shouldUseOverlay = numCanvases > 1 && numCanvases <= 5;
+    
+    // Handle local video as overlay when appropriate
+    const localCanvas = canvases['localVideo'];
+    if (localCanvas && shouldUseOverlay) {
+        makeLocalVideoOverlay(localCanvas);
+    } else if (localCanvas) {
+        removeLocalVideoOverlay(localCanvas);
+    }
     
     // Defer measurement until after layout reflow
     requestAnimationFrame(() => {
@@ -58,14 +67,19 @@ function rebalanceVideoGrid() {
         const availableWidth = rect.width || (window.innerWidth - 40);
         const availableHeight = rect.height || (window.innerHeight - 200);
 
-        let numRows = Math.floor(Math.sqrt(numCanvases * availableHeight / availableWidth) + 0.65);
-        const canvasesPerRow = Math.ceil(numCanvases / numRows);
-        numRows = Math.ceil(numCanvases / canvasesPerRow); // Recalculate rows based on canvases per row to avoid wasting space
+        // Count canvases that should participate in the grid (exclude overlay local video)
+        const gridCanvases = Object.entries(canvases).filter(([id, data]) => { return !(shouldUseOverlay && id === 'localVideo'); });
+        const numGridCanvases = gridCanvases.length;
+        if (numGridCanvases === 0) return;
+
+        let numRows = Math.floor(Math.sqrt(numGridCanvases * availableHeight / availableWidth) + 0.65);
+        const canvasesPerRow = Math.ceil(numGridCanvases / numRows);
+        numRows = Math.ceil(numGridCanvases / canvasesPerRow); // Recalculate rows based on canvases per row to avoid wasting space
         const maxWidth = Math.floor((availableWidth - (canvasesPerRow-1) * gapSize) / canvasesPerRow);
         const maxHeight = Math.floor((availableHeight - (numRows-1) * gapSize) / numRows);
 
-        // Apply size to all canvases
-        Object.values(canvases).forEach(({ container, canvas }) => {
+        // Apply size to grid canvases only
+        gridCanvases.forEach(([id, { container, canvas }]) => {
             container.style.flex = `0 0 ${maxWidth}px`;
             container.style.width = container.style.maxWidth = container.style.minWidth = `${maxWidth}px`;
             container.style.height = container.style.maxHeight = `${maxHeight}px`;
@@ -116,6 +130,27 @@ function initCanvasContext(canvas) {
     
     const ctx = initCanvas2D(canvas);
     return ctx;
+}
+
+function makeLocalVideoOverlay(localCanvasData) {
+    const { container, canvas } = localCanvasData;
+    
+    // Add overlay class - styles are handled by CSS
+    container.classList.add('local-video-overlay');
+    
+    // Update canvas size for overlay dimensions
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 200 * dpr;
+    canvas.height = 150 * dpr;
+    
+    // Re-render if video is playing
+    if (canvas.videoElement) { renderFrame(canvas, canvas.videoElement, canvas.mirror); }
+}
+
+function removeLocalVideoOverlay(localCanvasData) {
+    const { container } = localCanvasData;
+    // Remove overlay class - CSS will handle style reset
+    container.classList.remove('local-video-overlay');
 }
 
 function renderFrame(canvas, videoElement, mirror) {

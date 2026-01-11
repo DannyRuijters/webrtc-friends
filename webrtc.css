@@ -56,6 +56,30 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
 .chat-input-group input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
 .chat-input-group button { padding: 10px 20px; min-width: 80px; }
 
+/* Local video overlay styles */
+.local-video-overlay {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    width: 200px !important;
+    height: 150px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+    max-height: 150px !important;
+    z-index: 1000 !important;
+    border: 2px solid #5d81cf !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    flex: none !important;
+}
+
+.local-video-overlay canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 200px !important;
+}
+
 /* Overlay styles */
 .overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
 .overlay.active { display: block; }
