@@ -100,7 +100,9 @@ function rebalanceVideoGrid() {
                 if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
                     canvas.width = bufferWidth;
                     canvas.height = bufferHeight;
-                    //if (canvas.videoElement) { renderFrame(canvas, canvas.videoElement, canvas.mirror); }
+                    if (canvas.videoElement) { 
+                        requestAnimationFrame(() => { renderFrame(canvas, canvas.videoElement, canvas.mirror); });
+                    }
                 }
             });
         });
