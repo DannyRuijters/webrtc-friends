@@ -147,7 +147,14 @@ async function handleSignalingMessage(message) {
             break;
         case 'screen-share-stopped':
             const screenCanvasId = `remote-${message.senderId}-screen`;
+            console.log(`Received screen-share-stopped for peer ${message.senderId}`);
             if (canvases[screenCanvasId]) { removeVideoCanvas(screenCanvasId); }
+            
+            // Additional cleanup: remove any screen share senders for this peer
+            if (screenShareSenders && screenShareSenders[message.senderId]) {
+                delete screenShareSenders[message.senderId];
+                console.log(`Cleaned up screen share sender for peer ${message.senderId}`);
+            }
             break;
         default:
             console.warn('Unknown message type:', message.type);
@@ -284,9 +291,31 @@ function handleIncomingTrack(event, peerId, peerName) {
     canvases[canvasId].streamId = streamId;
     
     if (isScreenShare) {
-        const cleanup = () => canvases[canvasId] && removeVideoCanvas(canvasId);
+        const cleanup = () => {
+            if (canvases[canvasId]) {
+                console.log(`Screen share track ended, cleaning up canvas ${canvasId}`);
+                removeVideoCanvas(canvasId);
+            }
+        };
+        
+        // Multiple cleanup triggers for reliability
         event.track.onended = cleanup;
-        stream.onremovetrack = () => stream.getTracks().length === 0 && cleanup();
+        stream.onremovetrack = () => {
+            if (stream.getTracks().length === 0) {
+                console.log(`All tracks removed from screen share stream for ${canvasId}`);
+                cleanup();
+            }
+        };
+        
+        // Also set up a backup cleanup timer as fallback
+        const backupCleanup = () => {
+            if (event.track.readyState === 'ended' && canvases[canvasId]) {
+                console.log(`Backup cleanup triggered for ${canvasId}`);
+                cleanup();
+            }
+        };
+        setTimeout(backupCleanup, 5000); // Check after 5 seconds as fallback
+        
     } else {
         updateRemotePeerDisplay(peerId);
     }
