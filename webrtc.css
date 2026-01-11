@@ -62,10 +62,10 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
     bottom: 20px !important;
     left: 20px !important;
     width: 20% !important;
-    height: 15% !important;
+    height: 20% !important;
     min-width: 200px !important;
     max-width: 20% !important;
-    max-height: 15% !important;
+    max-height: 20% !important;
     z-index: 1000 !important;
     border: 2px solid #5d81cf !important;
     border-radius: 8px !important;
@@ -77,7 +77,6 @@ input[type="text"] { padding: 8px; margin: 0; border: 1px solid #ddd; border-rad
 .local-video-overlay canvas {
     width: 100% !important;
     height: 100% !important;
-    max-width: 200px !important;
 }
 
 /* Overlay styles */
