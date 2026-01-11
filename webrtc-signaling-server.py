@@ -44,7 +44,7 @@ client_id_counter = 0
 
 
 class ConnectionManager:
-    def __init__(self, max_peers_per_room=32):
+    def __init__(self, max_peers_per_room=16):
         self.active_connections: Dict[int, WebSocket] = {}
         self.client_names: Dict[int, str] = {}
         self.client_rooms: Dict[int, str] = {}
@@ -402,7 +402,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WebRTC Signaling Server")
     parser.add_argument("--port", type=int, default=8080, help="Port to listen on (default: 8080)")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
-    parser.add_argument("--max-peers", type=int, default=32, help="Maximum number of peers per room (default: 32)")
+    parser.add_argument("--max-peers", type=int, default=16, help="Maximum number of peers per room (default: 16)")
     args = parser.parse_args()
     
     # Initialize connection manager with max peers setting
