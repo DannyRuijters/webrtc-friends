@@ -90,21 +90,16 @@ function rebalanceVideoGrid() {
             canvas.style.height = `${maxHeight}px`;
         });
 
-        // Update drawing buffer after sizes are applied
-        requestAnimationFrame(() => {
-            Object.values(canvases).forEach(({ canvas }) => {
-                const canvasRect = canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                const bufferWidth = Math.round(canvasRect.width * dpr);
-                const bufferHeight = Math.round(canvasRect.height * dpr);
-                if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
-                    canvas.width = bufferWidth;
-                    canvas.height = bufferHeight;
-                    if (canvas.videoElement) { 
-                        requestAnimationFrame(() => { renderFrame(canvas, canvas.videoElement, canvas.mirror); });
-                    }
-                }
-            });
+        Object.values(canvases).forEach(({ canvas }) => {
+            const canvasRect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const bufferWidth = Math.round(canvasRect.width * dpr);
+            const bufferHeight = Math.round(canvasRect.height * dpr);
+            if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+                canvas.width = bufferWidth;
+                canvas.height = bufferHeight;
+                if (canvas.videoElement) { renderFrame(canvas, canvas.videoElement, canvas.mirror); }
+            }
         });
     });
 }
