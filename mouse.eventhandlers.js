@@ -31,8 +31,8 @@ function handleMouseMove(event) {
 
         const canvas = lastCanvas;
         const ctx = canvas.ctx;        
-        ctx.translateX -= deltaX / canvas.width;
-        ctx.translateY += deltaY / canvas.height;
+        ctx.translateX -= deltaX;
+        ctx.translateY += deltaY;
         
         renderFrame(canvas, canvas.videoElement, canvas.mirror);
         event.preventDefault();
@@ -106,9 +106,8 @@ function handleTouchMove(event) {
             // Pan (two-finger drag)
             const deltaX = center.x - lastTouchCenterX;
             const deltaY = center.y - lastTouchCenterY;
-            
-            ctx.translateX -= 2.0 * deltaX / canvas.width;
-            ctx.translateY += 2.0 * deltaY / canvas.height;
+            ctx.translateX -= 2.0 * deltaX;
+            ctx.translateY += 2.0 * deltaY;
         }
         
         lastTouchCenterX = center.x;
