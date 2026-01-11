@@ -62,8 +62,11 @@ function rebalanceVideoGrid() {
         const videoGrid = document.getElementById('videoGrid');
         const rect = videoGrid.getBoundingClientRect();
         
+        // Get gap size from CSS
+        const videoGridStyles = window.getComputedStyle(videoGrid);
+        const gapSize = parseInt(videoGridStyles.gap) || 10; // fallback to 10 if gap is not set
+        
         // Calculate available space accounting for gaps
-        const gapSize = 10;
         const availableWidth = rect.width || (window.innerWidth - 40);
         const availableHeight = rect.height || (window.innerHeight - 200);
 
@@ -86,25 +89,11 @@ function rebalanceVideoGrid() {
             canvas.style.width = canvas.style.maxWidth = `${maxWidth}px`;
             canvas.style.height = `${maxHeight}px`;
         });
-        
-        // Update drawing buffer after sizes are applied
-        requestAnimationFrame(() => {
-            Object.values(canvases).forEach(({ canvas }) => {
-                const canvasRect = canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                const bufferWidth = Math.round(canvasRect.width * dpr);
-                const bufferHeight = Math.round(canvasRect.height * dpr);
-                if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
-                    canvas.width = bufferWidth;
-                    canvas.height = bufferHeight;
-                    if (canvas.videoElement) { renderFrame(canvas, canvas.videoElement, canvas.mirror); }
-                }
-            });
-        });
     });
 }
 
-function initCanvas2D(canvas) {
+function initCanvasContext(canvas) {
+    console.log("Initializing Canvas 2D context for canvas:", canvas.id);
     let ctx;
     try {
         ctx = canvas.getContext("2d");
@@ -118,17 +107,6 @@ function initCanvas2D(canvas) {
     if (!ctx) {
         alert("Could not initialise Canvas 2D context, sorry :-(");
     }
-    return ctx;
-}
-
-function initCanvasContext(canvas) {
-    console.log("Initializing Canvas 2D context for canvas:", canvas.id);
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    // set the size of the drawingBuffer based on the size it's displayed.
-    canvas.width = canvas.clientWidth * devicePixelRatio;
-    canvas.height = canvas.clientHeight * devicePixelRatio;
-    
-    const ctx = initCanvas2D(canvas);
     return ctx;
 }
 
@@ -173,7 +151,7 @@ function renderFrame(canvas, videoElement, mirror) {
     
     ctx.save();
     ctx.translate(canvasWidth / 2, canvasHeight / 2); // Move origin to center
-    ctx.translate(-ctx.translateX * canvasWidth, ctx.translateY * canvasHeight); // Apply panning
+    ctx.translate(-ctx.translateX, ctx.translateY); // Apply panning
     ctx.scale(1 / ctx.zoom, 1 / ctx.zoom); // Apply zoom (user zoom inverts: smaller value = more zoomed in)
     if (mirror) { ctx.scale(-1, 1); } // Apply mirror transform if needed
     ctx.scale(baseScale, baseScale); // Apply base scale to fit/cover canvas
